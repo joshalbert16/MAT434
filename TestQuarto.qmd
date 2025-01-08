@@ -1,7 +1,16 @@
 ---
-title: "Untitled"
+title: Analytics Report Shell
+author: 
+  - name: Joshua Albert
+    email: joshua.albert@snhu.edu
+    affiliations: 
+      - name: Southern New Hampshire University
 format: html
-editor: visual
+date: 9/15/2024
+date-modified: today
+date-format: long
+theme: flatly
+toc: true
 ---
 
 ## Quarto

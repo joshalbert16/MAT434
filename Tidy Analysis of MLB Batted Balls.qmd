@@ -2,15 +2,23 @@
 title: "Tidy Analysis of MLB Batted Balls"
 author: "Joshua Albert"
 format: html
+
 ---
 
+## Loading Data
 ```{r}
+#| message: false
+
+#| code-fold: false
+
 library(tidyverse)
 library(tidymodels)
-library(kableExtra)
-library(patchwork)
 library(skimr)
+library(kableExtra)
+``` 
 
+## Read in Data
+```{r}
 park_dimensions <- read.csv("https://raw.githubusercontent.com/agmath/agmath.github.io/refs/heads/master/data/classification/park_dimensions.csv")
 
 
@@ -18,170 +26,124 @@ batted_balls <- read.csv("https://raw.githubusercontent.com/agmath/agmath.github
 
 ```
 
+## Joinig Data
 ```{r}
-View(park_dimensions)
-head(park_dimensions)
-tail(park_dimensions)
-
-batted_balls %>%
-  head()
-park_dimensions %>%
-  head()
+batted_balls <- batted_balls %>%
+left_join(park_dimensions, by = c("park" = "park"))
 
 
 ```
 
-```{r}
+We joined the `batted_balls` and `parks` data together, to obtain a full data set with `r nrow(batted_balls)` rows and `r ncol(batted_balls)` columns
 
-batted_balls %>% 
-  filter(pitch_name == "Changeup") %>%
-  head()
+```{r}
+batted_balls%>%
+  skim()
 
 ```
 
-```{r}
-batted_balls %>%
-  filter((bearing == "center") & (launch_speed > 100)) %>%
-  head()
-```
+
+Split into training and test data
 
 ```{r}
-batted_balls %>% 
-  select(batter_team, bb_type, bearing, inning, pitch_mph, launch_speed, launch_angle, is_home_run) %>%
-  head()
-```
+set.seed(434)
+data_splits <- initial_split(batted_balls, 0.85, strata = is_home_run)
 
-```{r}
-batted_balls %>%
-  select(-bip_id,-batter_id, -pitcher_id) %>%
-  head()
+train <- training(data_splits)
+test <- testing(data_splits)
 
 
 ```
 
+## Exploratory Data Analysis
+
+How and why do home runs happen?
+
+Filtering Rows
+
 ```{r}
-batted_balls %>%
-  select(batter_name, pitcher_name, bb_type, is_home_run, everything()) %>%
-  head()
+train %>% 
+  filter(is_home_run == 1) 
+ 
+train %>%
+  filter(launch_angle > 45)
 
+train%>%
+  filter(str_detect(NAME, "Fenway"))
+```
+Selecting just a few columns
 
+```{r}
+train %>%
+  select(launch_speed, launch_angle, is_home_run)
+```
+Building new variables from old ones (*Feature Engineering*)
 
+```{r}
+train %>%
+  mutate(fast_pitch = ifelse(pitch_mph > 100, "yes", "no"))
 
 ```
 
-```{r}
-batted_balls %>%
-  filter(home_team == "BOS") %>%
-  select(away_team, batter_team, batter_name, pitcher_name, bb_type, bearing, pitch_name, is_home_run) %>%
-  head()
-```
+
+## Summary Statistics
+
+Home runs...
 
 ```{r}
-batted_balls %>%
-  count(batter_team) %>%
-  head()
-
+train %>%
+  count(is_home_run)%>%
+  mutate(prop = 100*n/sum(n))
 
 ```
 
-```{r}
-
-batted_balls %>%
-  count(batter_team) %>%
-  arrange(-n) %>%
-  head(10)
-```
 
 ```{r}
-batted_balls %>%
-  filter(outs_when_up == 2) %>%
-  count(home_team, pitch_name) %>%
-  head(10)
+train %>%
+  summarize(pct_hr = 100*mean(is_home_run))
 ```
 
-```{r}
-
-batted_balls %>% 
-  filter(home_team == "BOS") %>%
-  count(bearing) %>%
-  head(10)
-
-```
-
-```{r}
-
-batted_balls %>%
-  summarize(median_launch_speed = median(launch_speed))
-
-
-```
-
-```{r}
-batted_balls %>%
-  filter(!is.na(launch_speed)) %>%
-  summarize(median_launch_speed = median(launch_speed))
-            
-            
-batted_balls %>%
-  summarize(median_launch_speed = median(launch_speed, na.rm = TRUE))
-
-```
-
-```{r}
-batted_balls %>% 
-  summarize(mean_pitch_mph = mean(pitch_mph, na.rm = TRUE), 
-            std_deviation_pitch_mph = sd(pitch_mph, na.rm = TRUE), 
-            mean_launch_speed = mean(launch_speed, na.rm = TRUE), 
-            std_deviation_launch_speed = sd(launch_speed, na.rm = TRUE))
-```
-
-```{r}
-batted_balls %>% 
-  group_by(pitch_name) %>%
-  summarize(mean_pitch_mph = mean(pitch_mph, na.rm = TRUE), 
-            std_deviation_pitch_mph = sd(pitch_mph, na.rm = TRUE), 
-            mean_launch_speed = mean(launch_speed, na.rm = TRUE), 
-            std_deviation_launch_speed = sd(launch_speed, na.rm = TRUE))
-
-```
-
-```{r}
-batted_balls %>% 
-  group_by(pitch_name) %>%
-  summarize(mean_pitch_mph = mean(pitch_mph, na.rm = TRUE), 
-            std_deviation_pitch_mph = sd(pitch_mph, na.rm = TRUE), 
-            mean_launch_speed = mean(launch_speed, na.rm = TRUE), 
-            std_deviation_launch_speed = sd(launch_speed, na.rm = TRUE)) %>%
-arrange(mean_launch_speed)
-```
-
-```{r}
-batted_balls %>%
-  mutate(vertical_launch_velocity = launch_speed * sin(launch_angle*(pi/180))) %>%
-  mutate(horizontal_launch_velocity = launch_speed * cos(launch_angle*(pi/180)))
-          
-
-```
-
-```{r}
-batted_balls %>%
-  mutate(launch_speed_categorical = case_when(
-    (launch_speed > 100) ~ "Very Fast",
-    (launch_speed > 80) ~ "Fast",
-    (launch_speed > 65) ~ "Meh",
-    (launch_speed > 40) ~ "Kinda Slow",
-    (is.na(launch_speed)) ~ NA,
-    TRUE ~ "Was it even moving?"
-  ))
-
-```
-
-```{r}
-batted_balls %>%
-  left_join(park_dimensions, by = c("park" = "park"))
-
-```
 
 ```{r}
 
 ```
+
+
+
+
+Summarizing Launch Angle
+
+```{r}
+train %>%
+  filter(!is.na(launch_angle)) %>%
+  summarize(
+    min_angle = min(launch_angle),
+    mean_angle = mean(launch_angle),
+    median_angle = median(launch_angle),
+    max_angle = max(launch_angle),
+    sd_angle = sd(launch_angle),
+    
+  )
+```
+
+
+
+### Grouped Summaries
+
+```{r}
+train %>%
+  group_by(is_home_run, NAME) %>%
+  filter(!is.na(launch_angle)) %>%
+  summarize(
+    min_angle = min(launch_angle),
+    mean_angle = mean(launch_angle),
+    median_angle = median(launch_angle),
+    max_angle = max(launch_angle),
+    sd_angle = sd(launch_angle),
+  ) 
+
+    
+```
+
+
+

@@ -86,7 +86,7 @@ train %>%
 ```
 
 
-## Summary Statistics
+### Summary Statistics
 
 Home runs...
 
@@ -128,7 +128,7 @@ train %>%
 
 
 
-### Grouped Summaries
+#### Grouped Summaries
 
 ```{r}
 train %>%
@@ -145,5 +145,39 @@ train %>%
     
 ```
 
+### Data Viz
 
+
+```{r}
+
+train %>%
+  ggplot() + 
+  geom_bar(aes(x = is_home_run)) +
+  labs(
+    title = "Homeruns"
+  )
+
+
+```
+
+```{r}
+
+train %>%
+  ggplot() + 
+  geom_histogram(aes(x = pitch_mph, y = after_stat(density))) +
+geom_density(aes(x = pitch_mph))
+
+
+
+```
+```{r}
+train %>%
+   ggplot() +
+geom_bar(aes(x = bb_type, fill = bearing)) +
+  labs(
+    title = "Distribution of Direction Hit and Type of Hit"
+
+  )
+
+```
 

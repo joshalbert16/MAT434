@@ -2,10 +2,10 @@
 title: "Tidy Analysis of MLB Batted Balls"
 author: "Joshua Albert"
 format: html
-
 ---
 
 ## Loading Data
+
 ```{r}
 #| message: false
 
@@ -15,9 +15,10 @@ library(tidyverse)
 library(tidymodels)
 library(skimr)
 library(kableExtra)
-``` 
+```
 
 ## Read in Data
+
 ```{r}
 park_dimensions <- read.csv("https://raw.githubusercontent.com/agmath/agmath.github.io/refs/heads/master/data/classification/park_dimensions.csv")
 
@@ -26,7 +27,8 @@ batted_balls <- read.csv("https://raw.githubusercontent.com/agmath/agmath.github
 
 ```
 
-## Joinig Data
+## Joining Data
+
 ```{r}
 batted_balls <- batted_balls %>%
 left_join(park_dimensions, by = c("park" = "park"))
@@ -42,8 +44,7 @@ batted_balls%>%
 
 ```
 
-
-Split into training and test data
+## Split into training and test data
 
 ```{r}
 set.seed(434)
@@ -71,12 +72,14 @@ train %>%
 train%>%
   filter(str_detect(NAME, "Fenway"))
 ```
+
 Selecting just a few columns
 
 ```{r}
 train %>%
   select(launch_speed, launch_angle, is_home_run)
 ```
+
 Building new variables from old ones (*Feature Engineering*)
 
 ```{r}
@@ -84,7 +87,6 @@ train %>%
   mutate(fast_pitch = ifelse(pitch_mph > 100, "yes", "no"))
 
 ```
-
 
 ### Summary Statistics
 
@@ -97,19 +99,14 @@ train %>%
 
 ```
 
-
 ```{r}
 train %>%
   summarize(pct_hr = 100*mean(is_home_run))
 ```
 
-
 ```{r}
 
 ```
-
-
-
 
 Summarizing Launch Angle
 
@@ -125,8 +122,6 @@ train %>%
     
   )
 ```
-
-
 
 #### Grouped Summaries
 
@@ -146,7 +141,6 @@ train %>%
 ```
 
 ### Data Viz
-
 
 ```{r}
 
@@ -170,6 +164,7 @@ geom_density(aes(x = pitch_mph))
 
 
 ```
+
 ```{r}
 train %>%
    ggplot() +
@@ -180,4 +175,115 @@ geom_bar(aes(x = bb_type, fill = bearing)) +
   )
 
 ```
+
+## Model Construction, Evaluation, and Tuning
+
+Tidy Models Framework
+
+1.  Model "SPEC"ification
+2.  "REC"ipe
+3.  Package both into a workflow
+
+Data Prep: Rules of Thumb
+1. Recode logical (TRUE/FALSE) into characters (mutate w/ as.character)
+2. Classification outcome needs to be a factor (mutatate w/ "as.factor" OR "factor")
+
+
+```{r}
+hits_for_model <- batted_balls %>%
+  mutate(is_home_run = ifelse(is_home_run == 1, "Yes", "No")) %>%
+  mutate(is_home_run = factor(is_home_run, levels = c("No", "Yes")))
+
+
+set.seed(434)
+data_splits <- initial_split(hits_for_model, 0.85, strata = is_home_run)
+
+train <- training(data_splits)
+test <- testing(data_splits)
+
+```
+
+Fitting a model...
+
+```{r}
+dt_spec <- decision_tree() %>%
+  set_engine("rpart") %>%
+  set_mode("classification")
+  
+dt_rec <- recipe(is_home_run ~ launch_speed + launch_angle + pitch_mph + pitch_name + Cover, data = train) %>%
+  step_impute_median(all_numeric_predictors()) %>%
+  step_impute_mode(all_nominal_predictors()) %>%
+  step_dummy(all_nominal_predictors())
+
+dt_wf <- workflow() %>%
+  add_model(dt_spec) %>%
+  add_recipe(dt_rec)
+
+dt_fit <- dt_wf %>%
+  fit(train)
+
+```
+
+Lets see the model
+
+
+```{r}
+dt_fit %>%
+  extract_fit_engine() %>%
+  rpart.plot::rpart.plot()
+```
+
+Assess our models performance
+
+Training Data...
+
+```{r}
+dt_fit %>%
+  augment(train) %>%
+  accuracy(is_home_run, .pred_class)
+
+```
+
+Testing Data
+
+
+```{r}
+dt_fit %>%
+  augment(test) %>%
+  accuracy(is_home_run, .pred_class)
+```
+Cross Validation
+
+
+```{r}
+train_folds <- vfold_cv(train, v = 10, strat = is_home_run)
+
+dt_cv_results <- dt_wf %>%
+  fit_resamples(train_folds)
+
+dt_cv_results %>%
+  collect_metrics()
+
+```
+
+Tuning our model...
+
+```{r}
+dt_spec <- decision_tree(tree_depth = tune()) %>%
+  set_engine("rpart") %>%
+  set_mode("classification")
+
+dt_wf <- workflow() %>%
+  add_model(dt_spec) %>%
+  add_recipe(dt_rec)
+
+dt_tune_results <- dt_wf %>%
+  tune_grid(
+    resamples = train_folds,
+    grid = 10
+  )
+dt_tune_results %>%
+  show_best(n = 10, metric = "accuracy")
+```
+
 

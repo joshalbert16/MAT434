@@ -1,27 +1,71 @@
 ---
-title: Competition Quarto
+title: Analytics Report Shell
 author: 
-  - name: Josh Albert
+  - name: Joshua, Albert
     email: joshua.albert@snhu.edu
     affiliations: 
       - name: Southern New Hampshire University
-format: html
-date: 1/8/25
-date-modified: today
+date: today
 date-format: long
 theme: flatly
 toc: true
 ---
 
-## Quarto
+```{r global-options, include=FALSE}
+library(tidyverse)
+library(tidymodels)
+library(patchwork)
+library(kableExtra)
 
-Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+options(kable_styling_bootstrap_options = c("hover", "striped"))
 
-## Running Code
+theme_set(theme_bw(base_size = 14))
+```
 
-When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
-
+## Statement of Purpose
 ```{r}
+competion <- read.csv("https://raw.githubusercontent.com/joshalbert16/MAT434/refs/heads/main/comp.csv?token=GHSAT0AAAAAAC5CLRCSK23Q2EW2RRY77D6OZ4J5O7A")
+
+data <- read.csv("https://raw.githubusercontent.com/joshalbert16/MAT434/refs/heads/main/data.csv?token=GHSAT0AAAAAAC5CLRCTV5WGE44EZA327DPAZ4J5PWA")
+
+```
+
+
+
+## Executive Summary
+```{r}
+competion %>%
+  head()
+
+data %>%
+  head()
+```
+
+
+
+## Introduction
+
+
+
+## Exploratory Data Analysis
+  
+
+
+## Model Construction
+
+
+
+## Model Interpretation and Inference
+
+
+
+## Conclusion
+
+
+
+## References
+```{r}
+
 
 
 ```

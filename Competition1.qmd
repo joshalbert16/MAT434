@@ -24,9 +24,9 @@ theme_set(theme_bw(base_size = 14))
 
 ## Statement of Purpose
 ```{r}
-competion <- read.csv("https://raw.githubusercontent.com/joshalbert16/MAT434/refs/heads/main/comp.csv?token=GHSAT0AAAAAAC5CLRCSK23Q2EW2RRY77D6OZ4J5O7A")
+competition <- read.csv("comp.csv")
 
-data <- read.csv("https://raw.githubusercontent.com/joshalbert16/MAT434/refs/heads/main/data.csv?token=GHSAT0AAAAAAC5CLRCTV5WGE44EZA327DPAZ4J5PWA")
+data <- read.csv("data.csv")
 
 ```
 
@@ -34,11 +34,11 @@ data <- read.csv("https://raw.githubusercontent.com/joshalbert16/MAT434/refs/hea
 
 ## Executive Summary
 ```{r}
-competion %>%
+competition %>%
   head()
 
-data %>%
-  head()
+
+  
 ```
 
 
@@ -48,7 +48,21 @@ data %>%
 
 
 ## Exploratory Data Analysis
-  
+```{r}
+data %>%
+
+
+
+
+```
+
+
+```{r}
+
+```
+
+
+
 
 
 ## Model Construction

@@ -29,15 +29,11 @@ competition <- read.csv("comp.csv")
 data <- read.csv("data.csv")
 
 ```
-
+The housing market can be a confusing place with houses having drastically different prices due to different property characteristics. This model is being made to identify the relationship between the price range of a property and its features. An accurate model would be able to output an accurate price range based on certain criteria and give buyers and sellers fair prices for what the home has to offer.
 
 
 ## Executive Summary
 ```{r}
-competition %>%
-  head()
-
-
   
 ```
 
@@ -48,19 +44,54 @@ competition %>%
 
 
 ## Exploratory Data Analysis
+
+
+This initial step is attempting to clean the data into more usable data by changing the average school rating into a rounded number.
 ```{r}
-data %>%
-
-
-
+school_edit <- data %>%
+  mutate(avgSchoolRating = ifelse(avgSchoolRating <= 10, round(avgSchoolRating,0), round(avgSchoolRating, 1)))
 
 ```
 
-
+This code chunk shows the proportion of each average-school-rating present in all of the houses and shows a histogram to visualize the data.
 ```{r}
+school_edit %>%
+  count(avgSchoolRating) %>%
+  mutate(proportion = n/sum(n)) %>%
+  kable() %>%
+  kable_styling()
+
+
+school_edit%>%
+ggplot() +
+  geom_histogram(aes(x = avgSchoolRating, y = after_stat(density))) 
 
 ```
 
+This bar graphs show the number of homes in each price range. This is of course an important parameter to consider when creating a model for finding the price range 
+```{r}
+
+school_edit%>%
+  ggplot() +
+  geom_bar(aes(x = priceRange))
+
+```
+This is to show a parameter that may not be important to consider. A large proportion (94%) of the homes are single family homes and none of the price ranges have a proportion close to that, meaning it is most likely not a significant factor to consider for the price of the home.
+```{r}
+
+school_edit%>%
+  count(homeType) %>%
+  mutate(proportion = n/sum(n)) %>%
+  kable() %>%
+  kable_styling()
+
+
+school_edit%>%
+  ggplot() +
+  geom_bar(aes(homeType))
+
+
+```
 
 
 

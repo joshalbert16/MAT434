@@ -64,18 +64,42 @@ school_edit %>%
 
 school_edit%>%
 ggplot() +
-  geom_histogram(aes(x = avgSchoolRating, y = after_stat(density))) 
+  geom_histogram(aes(x = avgSchoolRating, y = after_stat(density))) + 
+  
+  labs(
+    x = "School Rating",
+    y = "Density"
+  )
 
 ```
 
-This bar graphs show the number of homes in each price range. This is of course an important parameter to consider when creating a model for finding the price range 
+This bar graph shows the number of homes in each price range. This is of course an important parameter to consider when creating a model for finding the price range 
 ```{r}
 
 school_edit%>%
   ggplot() +
-  geom_bar(aes(x = priceRange))
+  geom_bar(aes(x = priceRange)) +
+  
+  labs(
+    
+    x = "Price Range",
+    y = "Density"
+  )
+```
+This box plot shows that the there may be a correlation between the average school rating and the price of the home. The mean for the higher priced homes are closest to the higher average school rating. 
+```{r}
+school_edit %>%
+  mutate(priceRange = fct_reorder(priceRange, avgSchoolRating)) %>%
+  ggplot() + 
+  geom_boxplot(aes(x = avgSchoolRating, y = priceRange, fill = priceRange),
+               show.legend = FALSE) +
+  labs(x = "School Rating", y = "")
+
 
 ```
+
+
+
 This is to show a parameter that may not be important to consider. A large proportion (94%) of the homes are single family homes and none of the price ranges have a proportion close to that, meaning it is most likely not a significant factor to consider for the price of the home.
 ```{r}
 
@@ -88,7 +112,27 @@ school_edit%>%
 
 school_edit%>%
   ggplot() +
-  geom_bar(aes(homeType))
+  geom_bar(aes(homeType)) + 
+  
+labs(
+  
+  x = " Home Type",
+  y = "Density"
+)  
+
+```
+
+
+This last plot also shows that there may be a small correlation between the size of the lot and the price range, all of the means increase as the price increases, although very slightly.
+
+```{r}
+school_edit %>%
+  mutate(priceRange = fct_reorder(priceRange, lotSizeSqFt)) %>%
+  ggplot() + 
+  geom_boxplot(aes(x = lotSizeSqFt, y = priceRange, fill = priceRange),
+               show.legend = FALSE) +
+               scale_x_log10() +
+  labs(x = "Lot Size (sq/ft)", y = "")
 
 
 ```

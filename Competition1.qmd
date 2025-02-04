@@ -16,6 +16,9 @@ library(tidyverse)
 library(tidymodels)
 library(patchwork)
 library(kableExtra)
+library(ggridges)
+library(marginaleffects)
+library(reshape2)
 
 options(kable_styling_bootstrap_options = c("hover", "striped"))
 
@@ -64,9 +67,10 @@ school_edit %>%
 
 school_edit%>%
 ggplot() +
-  geom_histogram(aes(x = avgSchoolRating, y = after_stat(density))) + 
+  geom_histogram(aes(x = avgSchoolRating, y = after_stat(density)), color = "black",
+fill = "blue") + 
   
-  labs(
+  labs( title = "Average School Rating Density",
     x = "School Rating",
     y = "Density"
   )
@@ -78,10 +82,9 @@ This bar graph shows the number of homes in each price range. This is of course 
 
 school_edit%>%
   ggplot() +
-  geom_bar(aes(x = priceRange)) +
+  geom_bar(aes(x = priceRange), color = "black", fill = "red") +
   
   labs(
-    
     x = "Price Range",
     y = "Density"
   )
@@ -112,13 +115,13 @@ school_edit%>%
 
 school_edit%>%
   ggplot() +
-  geom_bar(aes(homeType)) + 
+  geom_bar(aes(homeType), color = "black", fill = "black") + 
   
 labs(
   
   x = " Home Type",
   y = "Density"
-)  
+  )  
 
 ```
 
@@ -141,6 +144,11 @@ school_edit %>%
 
 
 ## Model Construction
+```{r}
+
+
+
+```
 
 
 

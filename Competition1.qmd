@@ -19,6 +19,9 @@ library(kableExtra)
 library(ggridges)
 library(marginaleffects)
 library(reshape2)
+library(knitr)
+library(ggplot2)
+
 
 options(kable_styling_bootstrap_options = c("hover", "striped"))
 
@@ -66,14 +69,21 @@ school_edit %>%
 
 
 school_edit%>%
-ggplot() +
-  geom_histogram(aes(x = avgSchoolRating, y = after_stat(density)), color = "black",
-fill = "blue") + 
-  
-  labs( title = "Average School Rating Density",
+ggplot(aes(x = avgSchoolRating)) +
+  geom_histogram(aes(x = avgSchoolRating), color = "black",
+fill = "skyblue") + 
+  scale_x_continuous(breaks = seq(min(school_edit$avgSchoolRating), max(school_edit$avgSchoolRating), by = 0.5)) +
+  labs( 
+    title = "Average School Rating Density",
     x = "School Rating",
-    y = "Density"
+    y = "Count"
   )
+
+```
+
+
+```{r}
+
 
 ```
 
@@ -86,7 +96,7 @@ school_edit%>%
   
   labs(
     x = "Price Range",
-    y = "Density"
+    y = "Count"
   )
 ```
 This box plot shows that the there may be a correlation between the average school rating and the price of the home. The mean for the higher priced homes are closest to the higher average school rating. 
@@ -96,7 +106,7 @@ school_edit %>%
   ggplot() + 
   geom_boxplot(aes(x = avgSchoolRating, y = priceRange, fill = priceRange),
                show.legend = FALSE) +
-  labs(x = "School Rating", y = "")
+  labs(x = "School Rating", y = "Price Range")
 
 
 ```
@@ -115,12 +125,15 @@ school_edit%>%
 
 school_edit%>%
   ggplot() +
-  geom_bar(aes(homeType), color = "black", fill = "black") + 
-  
+  geom_bar(aes(homeType), color = "black", fill = "blue") + 
+theme_bw() +  # Use a clean theme
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)) +
+      
 labs(
-  
+ title = "Home Type Density",
   x = " Home Type",
-  y = "Density"
+  y = "Count"
   )  
 
 ```
@@ -135,7 +148,7 @@ school_edit %>%
   geom_boxplot(aes(x = lotSizeSqFt, y = priceRange, fill = priceRange),
                show.legend = FALSE) +
                scale_x_log10() +
-  labs(x = "Lot Size (sq/ft)", y = "")
+  labs(x = "Lot Size (sq/ft)", y = "Price Range")
 
 
 ```

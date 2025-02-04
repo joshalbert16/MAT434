@@ -24,6 +24,7 @@ library(patchwork)
 library(kableExtra)
 library(ggridges)
 library(marginaleffects)
+library(reshape2)
 
 data <- read_csv("https://raw.githubusercontent.com/agmath/agmath.github.io/master/data/classification/spaceship_titanic.csv")
 
@@ -515,6 +516,36 @@ new_data <- crossing(
             by = 1),
   name = NA
 )
+
+new_data_baked <- log_reg_rec %>%
+  prep() %>%
+  bake(new_data)
+
+mfx <- slopes(log_reg_fit %>% extract_fit_parsnip(),
+              newdata = new_data_baked,
+              variables = "vr_deck",
+              type = "prob") %>%
+  tibble()
+
+mfx %>%
+  select(term, vr_deck, estimate, conf.low, conf.high, std.error) %>%
+  kable() %>%
+  kable_styling(bootstrap_options = c("hover", "striped"))
+
+mfx %>%
+  arrange(age)
+
+mfx %>%
+  filter(group == "yes") %>%
+  select(vr_deck, estimate, conf.low, conf.high) %>%
+  ggplot() +
+  geom_line(aes(x = vr_deck, y = estimate), color = "purple", lty = "dashed", lwd = 1.5) +
+  geom_ribbon(aes(x = vr_deck, ymin = conf.low, ymax = conf.high),
+              fill = "grey", alpha = 0.5) +
+  labs(x = "VR Deck",
+       y = "Marginal Effect",
+       title = "Marginal Effects of Unit Increase in VR Deck Spending")
+
 ```
 
 Now we can `prep()` our recipe and `bake()` our new data to obtain the columns necessary for evaluating our model.

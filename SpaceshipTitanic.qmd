@@ -678,10 +678,61 @@ mfx %>%
   theme(legend.position = "none")
 ```
 
+#### Confusion matrix
+
+```{r}
+log_reg_fit %>% 
+  augment(train) %>% 
+  conf_mat(transported, .pred_class)
+
+
+```
+
+```{r}
+log_reg_fit %>% 
+  augment(train) %>% 
+  mutate(
+    # correct_flag =ifelse(transported == .pred_class, "yes", 
+    #                      ifelse(transported == "yes",
+    #                             "false-negative", "false-positive"))
+    correct_flag = case_when(
+      transported == .pred_class ~ "yes",
+      transported == "yes"~ "false-negative",
+      TRUE ~ "false-positive"
+    )
+  ) %>% 
+  group_by(correct_flag) %>% 
+  summarize(
+    median_food_spend = median(food_court, na.rm = TRUE)
+  )
+
+```
 
 ### Machine Learning
 
+```{r}
+train_folds <- vfold_cv(train, v = 10, strata = transported)
+```
+
 #### Logistic Regression
+
+
+```{r}
+
+my_metrics <- metric_set(accuracy, precision, recall)
+
+
+log_reg_cv_results <- log_reg_wf %>% 
+  fit_resamples(
+    resamples = train_folds,
+    metrics = my_metrics
+    
+  )
+
+log_reg_cv_results %>% 
+  collect_metrics(summarize = FALSE)
+
+```
 
 ## Model Interpretation and Inference
 

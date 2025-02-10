@@ -1,8 +1,8 @@
 ---
 title: Spaceship Titanic Investigation
 author: 
-  - name: Adam Gilbert
-    email: a.gilbert1@snhu.edu
+  - name: Josh Albert
+    email: joshua.albert@snhu.edu
     affiliations: 
       - name: Southern New Hampshire University
 format: html
@@ -24,7 +24,6 @@ library(patchwork)
 library(kableExtra)
 library(ggridges)
 library(marginaleffects)
-library(reshape2)
 
 data <- read_csv("https://raw.githubusercontent.com/agmath/agmath.github.io/master/data/classification/spaceship_titanic.csv")
 
@@ -80,7 +79,8 @@ train %>%
   geom_bar(aes(x = transported)) + 
   labs(title = "Distribution of Transported Passengers",
        x = "Interdimensional Transport Status",
-       y = "Count")
+       y = "Count") + 
+  theme_bw()
 ```
 
 ```{r}
@@ -103,7 +103,8 @@ p1 <- train %>%
     x = "",
     y = "Count"
   ) + 
-  coord_flip()
+  coord_flip() + 
+  theme_bw()
 
 p2 <- train %>%
   ggplot() + 
@@ -112,7 +113,7 @@ p2 <- train %>%
     title = "CryoSleep Selection",
     y = "Count",
     x = ""
-  )
+  ) + theme_bw()
 
 p3 <- train %>%
   ggplot() + 
@@ -122,7 +123,8 @@ p3 <- train %>%
     x = "",
     y = "Count"
   ) + 
-  coord_flip()
+  coord_flip() + 
+  theme_bw()
 
 p4 <- train %>%
   ggplot() + 
@@ -131,7 +133,8 @@ p4 <- train %>%
     title = "VIP Status",
     x = "",
     y = "Count"
-  )
+  ) + 
+  theme_bw()
 
 (p1 + p2) / (p3 + p4)
 ```
@@ -154,7 +157,8 @@ train %>%
     title = "Passenger Ages",
     x = "Age (Years)",
     y = ""
-  )
+  ) + 
+  theme_bw()
 ```
 
 The plot above shows a [near] 0-inflated distribution. That is, there is an inflated number of observations near 0, given the shape of the rest of the distribution. Ages are right-skewed, with a median passenger age of 27 years old. Next we’ll look at the distribution of room service charges.
@@ -175,7 +179,8 @@ p1 <- train %>%
     title = "Room Service Money Spent",
     x = "Expenditure",
     y = ""
-    )
+    ) + 
+  theme_bw()
 
 p2 <- train %>%
   ggplot() + 
@@ -190,12 +195,13 @@ p2 <- train %>%
     x = "Expenditure",
     y = ""
     ) + 
-  scale_x_log10()
+  scale_x_log10() + 
+  theme_bw()
 
 p1 + p2
 ```
 
-Both of the plots above show the distribution of room service expenditures. From the plot on the left, we can see that the distribution is very strongly right-skewed. The majority of passengers spent very little on room service, but there were some passengers who ran up extremely large tabs! The plot on the right shows the same variable but on a logarithmic scale. This particular transformation ignores passengers who did not spend any money on room service. From this plot, we actually see that the median room service expenditure among passengers who utilized room service is quite high – it is about `r median(train$room_service)`. We’ll continue our exploration of the available numerical features below, by working with the expenditures at the food court, shopping mall, spa, and VR deck. All of these are right skewed so we’ll just show the distributions on a logarithmic scale.
+Both of the plots above show the distribution of room service expenditures. From the plot on the left, we can see that the distribution is very strongly right-skewed. The majority of passengers spent very little on room service, but there were some passengers who ran up extremely large tabs! The plot on the right shows the same variable but on a logarithmic scale. This particular transformation ignores passengers who did not spend any money on room service. From this plot, we actually see that the median room service expenditure among passengers who utilized room service is quite high – it is about `r median(train$room_service, na.rm = TRUE)`. We’ll continue our exploration of the available numerical features below, by working with the expenditures at the food court, shopping mall, spa, and VR deck. All of these are right skewed so we’ll just show the distributions on a logarithmic scale.
 
 ```{r}
 #| warning: false
@@ -209,7 +215,8 @@ p_food <- train %>%
   scale_x_log10() +
   labs(title = "Food Court Expenditures",
        x = "Money Spent",
-       y = "")
+       y = "") + 
+  theme_bw()
 
 p_shop <- train %>%
   ggplot() + 
@@ -219,7 +226,8 @@ p_shop <- train %>%
   scale_x_log10() +
   labs(title = "Shopping Mall Expenditures",
        x = "Money Spent",
-       y = "")
+       y = "") + 
+  theme_bw()
 
 p_spa <- train %>%
   ggplot() + 
@@ -229,7 +237,8 @@ p_spa <- train %>%
   scale_x_log10() +
   labs(title = "Spa Expenditures",
        x = "Money Spent",
-       y = "")
+       y = "") + 
+  theme_bw()
 
 p_vr <- train %>%
   ggplot() + 
@@ -239,7 +248,8 @@ p_vr <- train %>%
   scale_x_log10() +
   labs(title = "VR Deck Expenditures",
        x = "Money Spent",
-       y = "")
+       y = "") + 
+  theme_bw()
 
 (p_food + p_shop) / (p_spa + p_vr)
 ```
@@ -299,7 +309,8 @@ train %>%
   labs(title = "Expenditure Distributions",
        x = "Money Spent",
        y = "") + 
-  theme(legend.position = "None")
+  theme(legend.position = "None") + 
+  theme_bw()
 ```
 
 ### Multivariate Analyses
@@ -315,7 +326,8 @@ p_home <- train %>%
            show.legend = FALSE) + 
   labs(title = "Home Planet and Transport",
        x = "Count",
-       y = "")
+       y = "") + 
+  theme_bw()
 
 p_cryo <- train %>%
   ggplot() + 
@@ -324,7 +336,8 @@ p_cryo <- train %>%
            position = "dodge") + 
   labs(title = "Cryo Sleep and Transport",
        x = "",
-       y = "Count")
+       y = "Count") + 
+  theme_bw()
 
 p_destination <- train %>%
   ggplot() + 
@@ -334,7 +347,8 @@ p_destination <- train %>%
            show.legend = FALSE) + 
   labs(title = "Destination and Transport",
        x = "Count",
-       y = "")
+       y = "") + 
+  theme_bw()
 
 p_vip <- train %>%
   ggplot() + 
@@ -344,7 +358,8 @@ p_vip <- train %>%
            show.legend = FALSE) + 
   labs(title = "VIP Status and Transport",
        x = "",
-       y = "Proportion")
+       y = "Proportion") + 
+  theme_bw()
 
 (p_home + p_cryo) / (p_destination + p_vip)
 ```
@@ -371,7 +386,8 @@ train %>%
   facet_wrap(~Venue) + 
   labs(title = "",
        x = "Expenditure",
-       y = "")
+       y = "") + 
+  theme_bw()
 ```
 
 In the group of plots appearing above, we see that higher food court and shopping mall expenditures were associate with those passengers who were transported than those who were not. Those individuals not being transported had higher room service, spa, and VR deck expenditures on average than those who were not transported.
@@ -448,7 +464,7 @@ log_reg_fit %>%
   kable()
 ```
 
-Notice that the following are associated with a *higher* likelihood of interdimensional transport:
+Notice that all of the predictors are statistically significant (at the 5% significance threshold). The following are associated with a *higher* likelihood of interdimensional transport:
 
 + being *younger* (lower `age` due to negative coefficient)
 + lower spending on `room_service`, the `spa`, and the `vr_deck`
@@ -457,7 +473,12 @@ Notice that the following are associated with a *higher* likelihood of interdime
 + taking advantage of `cryo_sleep`
 + traveling to `55 Cancri e` (as opposed to `PSO J318.5-22` or `TRAPPIST-1e`
 
-For categorical variables, we can make more meaningful interpretations by calculating and considering *odds-ratios*. An odds ratio is calculated by raising $e$ to the power of the corresponding model coefficient, and it measures how many times more likely an observation belonging to that category is to be transported to an alternate dimension than an observation belonging to the "base-level" for that categorical variable.
+:::{.callout-tip}
+## On Feature (Predictor) Selection
+For this particular model, we'd want to think a bit harder about a few items. First, do we really expect that `destination` planet should affect the likelihood of a passenger being transported to another dimension? Everyone is on the same ship and they haven't arrived to their destination yet... By including the `destination` variable, we could be masking the effect of a truly influential predictor (that is, there could be a *confounding* effect here). We should have similar concerns about `home_planet` -- do we expect that *species* might have an impact on the likelihood that a passenger is lost? Perhaps, but we should come up with a rationalization for, or against, the use of this predictor. As one additional comment, the space travel agency/company could be interested only in factors that they can control via ticketing. In this case, they may want to focus on the `cryo_sleep` service, `cabin` sleeping/housing arrangements, `vip` packages and accompanying services, and spending at the various ship amenities (`room_service`, `food_court`, etc.).
+:::
+
+For categorical variables, we can make more meaningful interpretations by calculating and considering *odds-ratios* (we are able to use these *odds-ratios* in interpretations with numerical variables, but that interpretation is a bit more tricky). An odds ratio is calculated by raising $e$ to the power of the corresponding model coefficient, and it measures how many times more likely an observation belonging to that category is to be transported to an alternate dimension than an observation belonging to the "base-level" for that categorical variable.
 
 ```{r}
 log_reg_fit %>%
@@ -471,7 +492,7 @@ log_reg_fit %>%
 
 Note that, controlling for all other variables, an individual from `Europa` is nearly 10 times more likely than an individual from `Earth` to be transported to an alternate dimensions. Similarly, an individual from `Mars` is over twice as likely to be transported to an alternate dimension than a traveler from `Earth`. Again, controlling for all other variables, an individual engaging in `cryo_sleep` is over 3.5 times more likely to be transported to an alternate dimension during space travel (we should probably shut that system down!). Controlling for the other variables, individuals who are `vip`s or whose destinations are `PSO J318.5-22` or `Trappist-1e` carry slightly more than half the risk of those non-`vip` individuals or individuals travelling to `55 Cancri e`.
 
-We can plot confidence intervals for the odds ratios to provide a more intutive (perhaps) view.
+We can plot confidence intervals for the odds ratios to provide a more intuitive (perhaps) view.
 
 ```{r}
 log_reg_fit %>%
@@ -492,8 +513,8 @@ log_reg_fit %>%
     x = "Odds Ratio",
     y = ""
   ) + 
-  theme_bw() %>%
-  theme(legend.position = "none")
+  theme(legend.position = "none") + 
+  theme_bw()
 ```
 
 For numerical predictors, we can use the `{marginaleffects}` package in order to estimate the marginal effects of the numerical predictors on the probability of interdimensional transport. We need to create a data frame of new values of the variable we are interested in, while holding values of the other variables constant. The `crossing()` function will create a data frame that includes a row for each combination of the given values for our predictors. Be careful here though because `crossing()` can easily generate quite giant data frames.
@@ -516,36 +537,6 @@ new_data <- crossing(
             by = 1),
   name = NA
 )
-
-new_data_baked <- log_reg_rec %>%
-  prep() %>%
-  bake(new_data)
-
-mfx <- slopes(log_reg_fit %>% extract_fit_parsnip(),
-              newdata = new_data_baked,
-              variables = "vr_deck",
-              type = "prob") %>%
-  tibble()
-
-mfx %>%
-  select(term, vr_deck, estimate, conf.low, conf.high, std.error) %>%
-  kable() %>%
-  kable_styling(bootstrap_options = c("hover", "striped"))
-
-mfx %>%
-  arrange(age)
-
-mfx %>%
-  filter(group == "yes") %>%
-  select(vr_deck, estimate, conf.low, conf.high) %>%
-  ggplot() +
-  geom_line(aes(x = vr_deck, y = estimate), color = "purple", lty = "dashed", lwd = 1.5) +
-  geom_ribbon(aes(x = vr_deck, ymin = conf.low, ymax = conf.high),
-              fill = "grey", alpha = 0.5) +
-  labs(x = "VR Deck",
-       y = "Marginal Effect",
-       title = "Marginal Effects of Unit Increase in VR Deck Spending")
-
 ```
 
 Now we can `prep()` our recipe and `bake()` our new data to obtain the columns necessary for evaluating our model.
@@ -578,7 +569,8 @@ mfx %>%
               fill = "grey", alpha = 0.5) +
   labs(x = "VR Deck",
        y = "Marginal Effect",
-       title = "Marginal Effects of Unit Increase in VR Deck Spending")
+       title = "Marginal Effects of Unit Increase in VR Deck Spending") + 
+  theme_bw()
 ```
 
 Spending in excess of $5000$ at the `vr_deck` does not seem to impact the probability of an individual being transported. Let's zoom in a bit one more moderate values of spending at the `vr_deck`.
@@ -594,7 +586,8 @@ mfx %>%
   labs(x = "VR Deck",
        y = "Marginal Effect",
        title = "Marginal Effects of Unit Increase in VR Deck Spending") + 
-  coord_cartesian(xlim = c(0, 5000))
+  coord_cartesian(xlim = c(0, 5000)) + 
+  theme_bw()
 ```
 
 We can see that additional spending at the `vr_deck` is associated with *lower* likelihood of interdimensional transport (the marginal effect is negative). The rate of reduction is greatest at around 600 to 700, but additional spending beyond 3500 seems to not be associated with any greater [meaningful] reduction in risk.
@@ -607,11 +600,11 @@ We did not cover this in class -- it is just here in case you are interested.
 
 We can model more complex behaviors by including higher-order terms in our models. For example, we might include terms that raise a numerical predictor to a power (allowing for curvature in the association between log-odds of probability of interdimensional transport and the corresponding predictor). Alternatively (or additionally), we might consider interactions between two variables, allowing for the fact that the rate at which one predictor influences the probability of interdimensional transport to depend on the value of another predictor.
 
-Below, we build a model that allows for the effect of `vr_spending` on the probability of interdimensional transport to depend on a passenger's `home_planet`. We allow for the interaction via the `step_interact()` feature engineering step.
+Below, we build a model that allows for the effect of `food_court` spending on the probability of interdimensional transport to depend on a passenger's `home_planet`. Passengers boarding the *Spaceship Titanic* earlier are more likely to have spent more money at the `food_court` just by virtue of being aboard the ship longer. This adjustment compensates for that. We allow for the interaction via the `step_interact()` feature engineering step.
 
 ```{r}
 complex_log_reg_rec <- log_reg_rec %>%
-  step_interact(~ vr_deck:starts_with("home_planet"))
+  step_interact(~ food_court:starts_with("home_planet"))
 
 complex_log_reg_wf <- workflow() %>%
   add_model(log_reg_spec) %>%
@@ -626,7 +619,7 @@ complex_log_reg_fit %>%
   kable()
 ```
 
-Notice that there are new model terms -- `vr_deck_x_home_planet_Europa` and `vr_deck_x_home_planet_Mars`. These are the terms that allow for the effect of `vr_deck` spending on probability of interdimensional transport to depend on `home_planet`. Those terms aren't statistically significant, but below is how you could visualize the marginal effects of `vr_deck` spending, accounting for differences across `home_planet`.
+Notice that there are new model terms -- `food_court_x_home_planet_Europa` and `food_court_x_home_planet_Mars`. These are the terms that allow for the effect of `food_court` spending on probability of interdimensional transport to depend on `home_planet`. Both of these new terms are statistically significant, indicating that the association between `food_court` spending on the probability of interdimensional transport is dependent (should be adjusted for) `home_planet`. Below is how we can visualize the marginal effects of `food_court` spending, accounting for differences across `home_planet`.
 
 ```{r}
 new_data <- crossing(
@@ -638,12 +631,12 @@ new_data <- crossing(
   age = mean(train$age, na.rm = TRUE),
   vip = "no",
   room_service = mean(train$room_service, na.rm = TRUE),
-  food_court = mean(train$food_court, na.rm = TRUE),
+  food_court = seq(min(train$food_court, na.rm = TRUE),
+            max(train$food_court, na.rm = TRUE),
+            by = 1),
   shopping_mall = mean(train$shopping_mall, na.rm = TRUE),
   spa = mean(train$spa, na.rm = TRUE),
-  vr_deck = seq(min(train$vr_deck, na.rm = TRUE),
-            max(train$vr_deck, na.rm = TRUE),
-            by = 1),
+  vr_deck = mean(train$vr_deck, na.rm = TRUE),
   name = NA
 )
 
@@ -653,7 +646,7 @@ new_data_baked <- complex_log_reg_rec %>%
 
 mfx <- slopes(complex_log_reg_fit %>% extract_fit_parsnip(),
               newdata = new_data_baked,
-              variables = "vr_deck",
+              variables = "food_court",
               type = "prob") %>%
   tibble()
 
@@ -664,74 +657,138 @@ mfx %>%
     home_planet_Mars == 1 ~ "Mars",
     TRUE ~ "Earth"
   )) %>%
-  select(vr_deck, home_planet, estimate, conf.low, conf.high) %>%
+  select(food_court, home_planet, estimate, conf.low, conf.high) %>%
   ggplot() +
-  geom_line(aes(x = vr_deck, y = estimate, color = home_planet), lty = "dashed", lwd = 1.5) +
-  geom_ribbon(aes(x = vr_deck, ymin = conf.low, ymax = conf.high, group = home_planet),
+  geom_line(aes(x = food_court, y = estimate, color = home_planet), lty = "dashed", lwd = 1.5) +
+  geom_ribbon(aes(x = food_court, ymin = conf.low, ymax = conf.high, group = home_planet),
               fill = "grey", alpha = 0.5) +
-  labs(x = "VR Deck Spending",
+  labs(x = "Food Court Spending",
        y = "Marginal Effect",
-       title = "Marginal Effects of Unit Increase in VR Deck Spending") + 
+       title = "Marginal Effects of Unit Increase in Food Court Spending") + 
   coord_cartesian(xlim = c(0, 5000)) + 
   facet_wrap(~home_planet) + 
   theme_bw() +
   theme(legend.position = "none")
 ```
 
-#### Confusion matrix
+We can see that the marginal effects of `food_court` spending are consistently positive (increased `food_court` spending is associated with a higher likelihood of interdimensional transport). Any spending at all increases risk for all travellers, but those from `Europa` seem to have the greatest increased risk for initial spending and then the risk increases at slower rates for higher amounts of spending (although the risk still does increase). The increased risk to Martians associated with `food_court` spending seems to be almost constant, but the additional risk accumulated by these passengers is almost always higher than for Earthlings and Europeans. The increase in risk to Earthlings seems greatest at a `food_court` spending level of around 2000.
+
+#### Confusion Matrix
 
 ```{r}
-log_reg_fit %>% 
-  augment(train) %>% 
+log_reg_fit %>%
+  augment(train) %>%
   conf_mat(transported, .pred_class)
-
-
 ```
 
 ```{r}
-log_reg_fit %>% 
-  augment(train) %>% 
+log_reg_fit %>%
+  augment(train) %>%
   mutate(
-    # correct_flag =ifelse(transported == .pred_class, "yes", 
-    #                      ifelse(transported == "yes",
-    #                             "false-negative", "false-positive"))
+    # correct_flag = ifelse(transported == .pred_class, "yes",
+    #                       ifelse(transported == "yes", "false-negative", "false-positive"))
     correct_flag = case_when(
       transported == .pred_class ~ "yes",
-      transported == "yes"~ "false-negative",
+      transported == "yes" ~ "false-negative",
       TRUE ~ "false-positive"
     )
-  ) %>% 
-  group_by(correct_flag) %>% 
+  ) %>%
+  group_by(correct_flag) %>%
   summarize(
     median_food_spend = median(food_court, na.rm = TRUE)
   )
-
 ```
 
 ### Machine Learning
 
+In the subsection that follows, we'll use cross-validation to assess our logistic regression model's performance relative to the performance metric we've rationalized as the one we should be caring most about. After running cross validation to estimate performance, we'll tune the model hyperparameters to see if we can achieve greater performance.
+
+Ethically, we feel a responsibility to optimize our model for *recall*. The repercussions associated with a false-negative (selling a traveler a ticket and them ending up transported to an alternate dimension) is much more severe than a false-positive (losing out on the ticket fee from a passenger who would have been safe to travel). In the discussions that follow, we'll focus on *recall* but we'll also compute the model *accuracy* and *precision* for additional context.
+
+We'll build cross-validation folds and then move into our model assessment and tuning.
+
 ```{r}
+set.seed(234)
 train_folds <- vfold_cv(train, v = 10, strata = transported)
 ```
 
 #### Logistic Regression
 
+Let's start with a "simple" *off-the-shelf* logistic regression model using the same `recipe()` as we did for our descriptive model from the previous section. We'll define the performance metrics we are interested in tracking (`my_metrics`), then we'll run the *cross-validation* procedure with the `fit_resamples()` function, and collect the performance metrics using `collect_metrics()`.
 
 ```{r}
-
 my_metrics <- metric_set(accuracy, precision, recall)
 
-
-log_reg_cv_results <- log_reg_wf %>% 
+log_reg_cv_results <- log_reg_wf %>%
   fit_resamples(
     resamples = train_folds,
     metrics = my_metrics
-    
   )
 
-log_reg_cv_results %>% 
-  collect_metrics(summarize = FALSE)
+log_reg_cv_results %>%
+  collect_metrics() %>%
+  kable()
+```
 
+Notice that the average recall over the ten cross-validation folds was around 77.09%. This indicates that we should expect a model of this particular form (a logistic regressor with the predictors we utilized and the feature engineering steps in our recipe) to correctly capture about 77% of passengers who are truly at risk of interdimensional transport. This isn't bad for a first pass -- can we do better?
+
+:::{.callout-tip}
+## Results of Cross-Validation
+The result of running `fit_resamples()` is a collection of performance metrics. We do not have a *fitted model* that can be used to make predictions until we `fit()` our model to its training data.
+:::
+
+#### Hyperparameter Tuning
+
+```{r}
+log_reg_spec <- logistic_reg(penalty = tune(), mixture = tune()) %>% 
+  set_engine("glmnet") %>% 
+  set_mode("classification")
+
+log_reg_tune_rec <- recipe(transported ~ ., data = train) %>%
+  step_rm(passenger_id) %>%
+  step_rm(name) %>%
+  step_rm(cabin) %>%
+  step_impute_median(all_numeric_predictors()) %>%
+  step_impute_mode(all_nominal_predictors()) %>%
+  step_dummy(all_nominal_predictors()) %>% 
+  step_normalize(all_numeric_predictors())
+
+log_reg_tune_wf <- workflow() %>% 
+  add_model(log_reg_spec) %>% 
+  add_recipe(log_reg_tune_rec)
+
+```
+
+Tuning our "penalty" and "mixture" hyperparameters
+
+```{r}
+#param_grid <- crossing(
+#  penalty = c(0.1, 1, 10, 100),
+#  mixture = sequence(0,1, by = 0.1)
+#)
+
+log_reg_tune_results <- log_reg_tune_wf %>% 
+  tune_grid(
+    resamples = train_folds,
+    grid = 12, #space-filling points in the hyperparameter space
+    metrics = metric_set(accuracy, precision, recall)
+  )
+
+
+log_reg_tune_results %>% 
+  show_best(n = 10, metric = "recall")
+
+
+log_reg_seq_tune_results <- log_reg_tune_wf %>% 
+  tune_bayes(
+    resamples = train_folds,
+    iter = 20,
+    metrics = metric_set(recall),
+    initial = log_reg_tune_results
+  )
+
+log_reg_seq_tune_results %>% 
+  show_best(n = 10, metric = "recall")
 ```
 
 ## Model Interpretation and Inference

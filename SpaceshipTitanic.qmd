@@ -896,11 +896,6 @@ svm_model_results3 %>%
 ```
 
 
-
-```{r}
-
-```
-
 ## Conclusion
 The first comparison I made was with the logistic regression model and a SVM LineaR model. The best mean of the logisic regression model was about 0.87 which is quite accurate. The SVM LineaR model was less accurate with a mean of about 0.78. After this model was made, I decided to create a second model with the same tuning but a different SVM model. Using the SVM Poly model type changed the original SVM Linear best mean from 0.77 to the SVM Poly best mean of 0.86 which is better than the Linear model but not better than the original Logistic Regressison model.
 

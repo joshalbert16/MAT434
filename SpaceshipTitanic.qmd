@@ -1,13 +1,12 @@
 ---
 title: Spaceship Titanic Investigation
 author: 
+  - name: Adam Gilbert
   - name: Josh Albert
     email: joshua.albert@snhu.edu
     affiliations: 
       - name: Southern New Hampshire University
-co-author: Adam Gilbert
 format: html
-date: 9/15/2023
 date: 2/14/25
 date-modified: today
 date-format: long
@@ -848,8 +847,6 @@ svm_model_wf_results_lin %>%
   show_best(n = 10, metric = "recall")
 ```
 
-
-
 This is a second model using the SVM Poly model.
 ```{r}
 svm_model2 <- svm_poly(mode = "classification", cost = tune()) 
@@ -905,7 +902,7 @@ svm_model_results3 %>%
 ```
 
 ## Conclusion
-The first comparison I made was with the logistic regression model and a SVM LineaR model. The best mean of the logisic regression model was about 0.87 which is quite accurate. The SVM LineaR model was less accurate with a mean of about 0.78. After this model was made, I decided to create a second model with the same tuning but a different SVM model. Using the SVM Poly model type changed the original SVM Linear best mean from 0.77 to the SVM Poly best mean of 0.86 which is better than the Linear model but not the original Logistic regressison model.
+The first comparison I made was with the logistic regression model and a SVM LineaR model. The best mean of the logisic regression model was about 0.87 which is quite accurate. The SVM LineaR model was less accurate with a mean of about 0.78. After this model was made, I decided to create a second model with the same tuning but a different SVM model. Using the SVM Poly model type changed the original SVM Linear best mean from 0.77 to the SVM Poly best mean of 0.86 which is better than the Linear model but not better than the original Logistic Regressison model.
 
 
 ## References

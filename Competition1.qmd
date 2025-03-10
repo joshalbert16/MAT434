@@ -159,9 +159,66 @@ school_edit %>%
 ## Model Construction
 ```{r}
 
+set.seed(347)
+data_splits <- initial_split(data)
+
+train <- training(data_splits)
+test <- testing(data_splits)
+
+
+train_folds <- vfold_cv(train, v = 10)
+
+```
+
+```{r}
+
+knn_spec <- nearest_neighbor() %>% 
+  set_engine("kknn") %>% 
+  set_mode("classification")
+
+
+knn_rec <- recipe(priceRange ~., data = train) %>% 
+  step_normalize(all_numeric_predictors()) %>% 
+  step_rm(all_nominal_predictors()) %>% 
+  step_rm(id) %>% 
+  step_rm(latitude) %>% 
+  step_rm(longitude) %>% 
+  step_impute_median(all_numeric_predictors())
+
+
+knn_wf <- workflow() %>% 
+  add_model(knn_spec) %>% 
+  add_recipe(knn_rec)
+
+```
+
+
+```{r}
+
+knn_cv_results <- knn_wf %>% 
+  fit_resamples (
+    resamples = train_folds,
+    metrics = metric_set(mn_log_loss)
+  )
+
+
+knn_cv_results %>% 
+  collect_metrics()
+```
+
+```{r}
+knn_train_fit <- knn_wf %>% 
+  fit(train)
+
+```
+
+```{r}
+
 
 
 ```
+
+
 
 
 

@@ -99,7 +99,7 @@ school_edit%>%
     y = "Count"
   )
 ```
-This box plot shows that the there may be a correlation between the average school rating and the price of the home. The mean for the higher priced homes are closest to the higher average school rating. 
+This box plot shows that the there may be a association between the average school rating and the price of the home. The mean for the higher priced homes are closest to the higher average school rating. 
 ```{r}
 school_edit %>%
   mutate(priceRange = fct_reorder(priceRange, avgSchoolRating)) %>%
@@ -160,13 +160,13 @@ school_edit %>%
 ```{r}
 
 set.seed(347)
-data_splits <- initial_split(data)
+data_splits <- initial_split(data, strata = priceRange)
 
 train <- training(data_splits)
 test <- testing(data_splits)
 
-
-train_folds <- vfold_cv(train, v = 10)
+set.seed(476)
+train_folds <- vfold_cv(train, v = 10, strata = priceRange)
 
 ```
 
@@ -180,7 +180,6 @@ knn_spec <- nearest_neighbor() %>%
 knn_rec <- recipe(priceRange ~., data = train) %>% 
   step_normalize(all_numeric_predictors()) %>% 
   step_rm(all_nominal_predictors()) %>% 
-  step_rm(id) %>% 
   step_rm(latitude) %>% 
   step_rm(longitude) %>% 
   step_impute_median(all_numeric_predictors())
@@ -204,6 +203,7 @@ knn_cv_results <- knn_wf %>%
 
 knn_cv_results %>% 
   collect_metrics()
+
 ```
 
 ```{r}

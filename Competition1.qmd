@@ -182,7 +182,8 @@ knn_rec <- recipe(priceRange ~., data = train) %>%
   step_rm(all_nominal_predictors()) %>% 
   step_rm(latitude) %>% 
   step_rm(longitude) %>% 
-  step_impute_median(all_numeric_predictors())
+  step_impute_median(all_numeric_predictors()) %>% 
+  step_dummy(all_nominal_predictors())
 
 
 knn_wf <- workflow() %>% 
@@ -219,8 +220,48 @@ knn_train_fit <- knn_wf %>%
 ```
 
 
+## Ensembles of Data
+
+```{r}
+
+rf_tune_spec <- rand_forest(trees = tune()) %>% 
+  set_engine("ranger") %>% 
+  set_mode("classification")
+
+rf_tune_rec <- recipe(priceRange ~., data = train) %>% 
+  step_rm(description) %>% 
+  step_unknown(all_nominal_predictors()) %>% 
+  step_novel(all_nominal_predictors()) %>% 
+  step_other(all_nominal_predictors()) %>% 
+  step_dummy(all_nominal_predictors()) %>% 
+  step_impute_median(all_numeric_predictors())
+
+rf_tune_wf <- workflow() %>% 
+  add_model(rf_tune_spec) %>% 
+  add_recipe(rf_tune_rec)
+
+```
 
 
+```{r}
+n_cores <- parallel::detectCores()
+cluster <- parallel::makeCluster(n_cores - 1, type = "PSOCK")
+doParallel::registerDoParallel(cluster)
+tictoc::tic()
+rf_tune_results <- rf_tune_wf %>%
+  tune_grid(
+    grid = 2,
+    resamples = train_folds,
+    metrics = metric_set(recall)
+  )
+parallel::stopCluster(cluster)
+tictoc::toc()
+```
+
+```{r}
+rf_tune_results %>% 
+  show_best()
+```
 
 ## Model Interpretation and Inference
 

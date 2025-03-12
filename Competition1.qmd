@@ -265,6 +265,54 @@ rf_tune_results %>%
 
 
 ```
+## Decision Tree
+
+```{r}
+dt_spec <- decision_tree(tree = tune()) %>% 
+  set_engine("rpart") %>% 
+  set_mode("classification")
+
+dt_recipe <- recipe(priceRange ~., data = train) %>% 
+  step_normalize(all_numeric_predictors()) %>% 
+  step_rm(all_nominal_predictors) %>% 
+  step_rm(description) %>% 
+  step_rm(latitude) %>% 
+  step_rm(longitude) %>% 
+  step_dummy(all_nominal_predictors()) %>% 
+  step_impute_median(all_numeric_predictors())
+  
+
+dt_wf <- workflow() %>% 
+  add_model(dt_spec) %>% 
+  add_recipe(dt_recipe)
+
+
+
+
+```
+
+
+```{r}
+n_cores <- parallel::detectCores()
+cluster <- parallel::makeCluster(n_cores - 3, type = "PSOCK")
+doParallel::registerDoParallel(cluster)
+tictoc::tic()
+dt_tune_results <- rf_tune_wf %>%
+  tune_grid(
+    grid = 2,
+    resamples = train_folds,
+    metrics = metric_set(recall)
+  )
+parallel::stopCluster(cluster)
+tictoc::toc()
+
+dt_tune_results %>% 
+  show_best()
+```
+
+```{r}
+
+```
 
 ## Model Interpretation and Inference
 

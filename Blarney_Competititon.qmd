@@ -1,0 +1,162 @@
+---
+title: "Blarney_Stone"
+format: html
+---
+
+## Quarto
+
+
+
+## Running Code
+
+
+```{r}
+library(tidyverse)
+library(tidymodels)
+library(patchwork)
+library(kableExtra)
+library(ggridges)
+library(marginaleffects)
+library(reshape2)
+library(knitr)
+library(ggplot2)
+
+
+```
+
+
+```{r}
+
+
+data <- read_csv("https://raw.githubusercontent.com/agmath/agmath.github.io/refs/heads/master/data/classification/blarney_data.csv")
+comp <- read_csv("https://raw.githubusercontent.com/agmath/agmath.github.io/refs/heads/master/data/classification/blarney_comp.csv")
+
+unregister <- function() {
+  env <- foreach:::.foreachGlobals
+  rm(list=ls(name=env), pos=env)
+}
+
+```
+
+
+```{r}
+data <- data |>
+  mutate(kissed = as.factor(kissed))
+data_folds <- vfold_cv(data, v = 10, strata = kissed)
+my_metrics <- metric_set(accuracy, mn_log_loss)
+
+```
+
+```{r}
+bt_spec <- boost_tree(trees = tune()) |>
+  set_engine("xgboost") %>% 
+  set_mode("classification")
+bt_rec <- recipe(kissed ~ ., data = data) |>
+  step_rm("id") |>
+  step_impute_knn(all_numeric_predictors()) |>
+  step_impute_mode(all_nominal_predictors()) |>
+  step_dummy(all_nominal_predictors())
+bt_wf <- workflow() |>
+  add_model(bt_spec) |>
+  add_recipe(bt_rec)
+
+ 
+n_cores <- parallel::detectCores()
+cl <- parallel::makeCluster(n_cores - 1, type = "PSOCK")
+doParallel::registerDoParallel(cl)
+tictoc::tic()
+bt_tune_results <- bt_wf %>%
+  tune_bayes(
+    resamples = data_folds,
+    metrics = metric_set(mn_log_loss),
+    initial = 5,
+    control = control_bayes(parallel_over = "everything")
+  )
+tictoc::toc()
+doParallel::stopImplicitCluster()
+unregister()
+
+```
+
+```{r}
+bt_fit |>
+  augment(data) |>
+  mn_log_loss(kissed, .pred_yes)
+```
+
+```{r}
+my_submission <- bt_fit %>%
+  augment(comp) %>%
+  rename(kissed = .pred_yes) %>%
+  select(id, kissed)
+write.csv(my_submission, "submissionJoshAndDillon.csv", row.names = FALSE)
+```
+
+
+```{r}
+data <- data |>
+  mutate(kissed = as.factor(kissed))
+data_folds <- vfold_cv(data, v = 10)
+my_metrics <- metric_set(accuracy, mn_log_loss)
+
+```
+
+
+
+
+
+# SVM Model
+
+```{r}
+svm_spec <- svm_poly(cost = tune(), scale_factor = tune(), margin = tune()) |>
+  set_mode("classification")
+svm_rec <- recipe(kissed ~ ., data = data) |>
+  step_rm("id") |>
+  step_impute_knn(all_numeric_predictors()) |>
+  step_impute_mode(all_nominal_predictors()) |>
+  step_dummy(all_nominal_predictors()) %>% 
+  step_normalize(all_numeric_predictors())
+
+svm_wf <- workflow() |>
+  add_model(svm_spec) |>
+  add_recipe(svm_rec)
+
+ 
+n_cores <- parallel::detectCores()
+cl <- parallel::makeCluster(n_cores - 1, type = "PSOCK")
+doParallel::registerDoParallel(cl)
+tictoc::tic()
+svm_tune_results <- svm_wf %>%
+  tune_bayes(
+    resamples = data_folds,
+    metrics = metric_set(mn_log_loss),
+    initial = 5,
+    control = control_bayes(parallel_over = "everything")
+  )
+tictoc::toc()
+doParallel::stopImplicitCluster()
+unregister()
+
+best_svm <- svm_tune_results %>% 
+  select_best()
+svm_final_wf <- svm_wf %>% 
+  finalize_workflow(best_svm)
+
+
+svm_fit <- svm_final_wf %>% 
+  fit(data)
+
+```
+
+```{r}
+bt_fit |>
+  augment(data) |>
+  mn_log_loss(kissed, .pred_yes)
+```
+
+
+
+```{r}
+
+```
+

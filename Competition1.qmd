@@ -224,6 +224,8 @@ dt_tune_results <- dt_wf %>%
 Below is the call of the mean of the log loss prediction. This is done by finalizing our work flow to get the best parameter and showing best results.
 
 ```{r}
+
+
 dt_best_param <- dt_tune_results %>% 
   select_best(metric = "mn_log_loss")
 
@@ -265,6 +267,7 @@ This Decision Tree model focuses on 3 important predictors involved in predictin
 ## K Nearest Neighbor
 
 The K Nearest neighbor model works differently from the Decision Tree model but the specification, recipe and workflow is the same. By setting a specification engine to "kknn" and the mode to "classification" we can create a recipe the removes unimportant data and normalizes data that may create inaccurate trends in the data. Last we can add our specification and recipe to a workflow for tidy models to execute.
+
 ```{r}
 
 knn_spec <- nearest_neighbor(neighbors = tune()) %>% 
@@ -287,10 +290,19 @@ knn_wf <- workflow() %>%
 
 ```
 
-By doing the same as the Decision tree model, we can extract the log loss mean for the best grid searches by finishing the workflow and tuning the neighbor parameter. The log loss metric shows a best mean of 2.6 and the worst of 4.3 but in kaggle this value changed drastically giving us a mean of 44.7
+By doing the same as the Decision tree model, we can extract the log loss mean for the best grid searches by finishing the workflow and tuning the neighbor parameter. The log loss metric shows a best mean of 2.6 and the worst of 4.3 but in kaggle this value changed drastically giving us a mean of 44.7.
+
 ```{r}
 
-knn_best_param <- knn_tune_results %>% 
+
+knn_cv_results <- knn_wf %>% 
+     tune_grid (
+       grid = 10,
+    resamples = train_folds,
+    metrics = metric_set(mn_log_loss)
+  )
+
+knn_best_param <- knn_cv_results %>% 
   select_best(metric = "mn_log_loss")
 
 knn_final_wf <- knn_wf %>% 
@@ -300,12 +312,6 @@ knn_fit <- knn_final_wf %>%
   fit(train)
 
 
-knn_cv_results <- knn_wf %>% 
-     tune_grid (
-       grid = 10,
-    resamples = train_folds,
-    metrics = metric_set(mn_log_loss)
-  )
 
 knn_cv_results %>% 
   show_best()

@@ -23,6 +23,13 @@ library(knitr)
 library(ggplot2)
 
 
+unregister <- function() {
+  env <- foreach :::.foreachGlobals
+  rm(list=ls(name=env),
+     pos=env)
+}
+
+
 options(kable_styling_bootstrap_options = c("hover", "striped"))
 
 theme_set(theme_bw(base_size = 14))
@@ -155,8 +162,10 @@ school_edit %>%
 
 
 
-
+#Competition Assignment 3
 ## Model Construction
+
+To start building the Decision Tree model, a seed must be set and the data must be split into training and test data. The train data must also be split into cross validation folds (which also need a seed)
 ```{r}
 
 set.seed(347)
@@ -170,9 +179,95 @@ train_folds <- vfold_cv(train, v = 10, strata = priceRange)
 
 ```
 
+
+After splitting the data, the typical model framework must be built. The model specification for the decision tree including the tuning feature and engine and mode calling is set to "rpart" and "classification" respectively. The next step is to build the recipe which is an important step in building the model. In this recipe, we can remove useless columns and execute code that will ensure missing data does not cause mathematical and computational errors. The last step is to create the workflow with the specification and recipe.
+## Decision Tree
+```{r}
+dt_spec <- decision_tree(tree = tune()) %>% 
+  set_engine("rpart") %>% 
+  set_mode("classification")
+
+dt_recipe <- recipe(priceRange ~., data = train) %>% 
+  step_normalize(all_numeric_predictors()) %>% 
+  #step_rm(all_nominal_predictors) %>% 
+  step_rm(description) %>% 
+  step_rm(latitude) %>% 
+  step_rm(longitude) %>% 
+  step_novel(city) %>% 
+  step_dummy(all_nominal_predictors()) %>% 
+  step_impute_median(all_numeric_predictors())
+  
+
+dt_wf <- workflow() %>% 
+  add_model(dt_spec) %>% 
+  add_recipe(dt_recipe)
+
+
+```
+In this model we chose to tune the tree() funciton, so we used "tune_grid" and our cross validation data set to fit a model that gives us the log loss mean of how our model performs. 
+```{r}
+#n_cores <- parallel::detectCores()
+#cluster <- parallel::makeCluster(n_cores - 3, type = "PSOCK")
+#doParallel::registerDoParallel(cluster)
+#tictoc::tic()
+dt_tune_results <- dt_wf %>%
+  tune_grid(
+    grid = 3,
+    resamples = train_folds,
+    metrics = metric_set(mn_log_loss)
+  )
+
+#parallel::stopCluster(cluster)
+#tictoc::toc()
+```
+
+Below is the call of the mean of the log loss prediction. This is done by finalizing our work flow to get the best parameter and showing best results.
+
+```{r}
+dt_best_param <- dt_tune_results %>% 
+  select_best(metric = "mn_log_loss")
+
+dt_final_wf <- dt_wf %>% 
+  finalize_workflow(dt_best_param)
+
+dt_fit <- dt_final_wf %>% 
+  fit(train)
+
+dt_fit %>%
+  extract_fit_engine() %>%
+  rpart.plot::rpart.plot()
+
+dt_tune_results %>% 
+  show_best()
+
+submission <- dt_fit %>%
+  augment(competition) %>%
+  rename(
+    prob_A = ".pred_0-250000",
+    prob_B = ".pred_250000-350000",
+    prob_C = ".pred_350000-450000",
+    prob_D = ".pred_450000-650000",
+    prob_E = ".pred_650000+"
+  ) %>%
+  select(id, starts_with ("prob"))
+
+write.csv(submission, "submissionDT.csv", row.names = FALSE)
+
+#my_submission <- dt_fit %>%
+ # augment(train) %>%
+ # rename(kissed = .pred_yes) %>%
+ # select(id, priceRange)
+#write.csv(my_submission, "submissionJoshDT.csv", row.names = FALSE)
+```
+This Decision Tree model focuses on 3 important predictors involved in predicting the price range of the different homes. As you can see in the decision tree, it first asks about the school rating, if the condition is no, it asks if the number of bathrooms is less than 1.1. The lst quesiton involves asking if the lot size is less than 0.067. The log loss mean is 1.3 which is pretty good but may change with the data in the kaggle competition.
+
+
+## K Nearest Neighbor
+
+The K Nearest neighbor model works differently from the Decision Tree model but the specification, recipe and workflow is the same. By setting a specification engine to "kknn" and the mode to "classification" we can create a recipe the removes unimportant data and normalizes data that may create inaccurate trends in the data. Last we can add our specification and recipe to a workflow for tidy models to execute.
 ```{r}
 
-knn_spec <- nearest_neighbor() %>% 
+knn_spec <- nearest_neighbor(neighbors = tune()) %>% 
   set_engine("kknn") %>% 
   set_mode("classification")
 
@@ -192,34 +287,56 @@ knn_wf <- workflow() %>%
 
 ```
 
-
+By doing the same as the Decision tree model, we can extract the log loss mean for the best grid searches by finishing the workflow and tuning the neighbor parameter. The log loss metric shows a best mean of 2.6 and the worst of 4.3 but in kaggle this value changed drastically giving us a mean of 44.7
 ```{r}
 
+knn_best_param <- knn_tune_results %>% 
+  select_best(metric = "mn_log_loss")
+
+knn_final_wf <- knn_wf %>% 
+  finalize_workflow(knn_best_param)
+
+knn_fit <- knn_final_wf %>% 
+  fit(train)
+
+
 knn_cv_results <- knn_wf %>% 
-  fit_resamples (
+     tune_grid (
+       grid = 10,
     resamples = train_folds,
     metrics = metric_set(mn_log_loss)
   )
 
-
 knn_cv_results %>% 
-  collect_metrics()
+  show_best()
+
+submission <- knn_fit %>%
+  augment(competition) %>%
+  rename(
+    prob_A = ".pred_0-250000",
+    prob_B = ".pred_250000-350000",
+    prob_C = ".pred_350000-450000",
+    prob_D = ".pred_450000-650000",
+    prob_E = ".pred_650000+"
+  ) %>%
+  select(id, starts_with ("prob"))
+
+write.csv(submission, "submissionKNN.csv", row.names = FALSE)
 
 ```
+```{r}
+
+
+```
+
 
 ```{r}
-knn_train_fit <- knn_wf %>% 
-  fit(train)
-
-```
-
-```{r}
 
 
 
 ```
 
-
+#Competition Assignment 4
 ## Ensembles of Data
 
 ```{r}
@@ -241,73 +358,63 @@ rf_tune_wf <- workflow() %>%
   add_recipe(rf_tune_rec)
 
 ```
-
-
 ```{r}
-n_cores <- parallel::detectCores()
-cluster <- parallel::makeCluster(n_cores - 1, type = "PSOCK")
-doParallel::registerDoParallel(cluster)
-tictoc::tic()
-rf_tune_results <- rf_tune_wf %>%
-  tune_grid(
-    grid = 2,
-    resamples = train_folds,
-    metrics = metric_set(recall)
-  )
-parallel::stopCluster(cluster)
-tictoc::toc()
+#n_cores <- parallel::detectCores()
+#cluster <- parallel::makeCluster(n_cores - 1, type = "PSOCK")
+#doParallel::registerDoParallel(cluster)
+#tictoc::tic()
+#rf_tune_results <- rf_tune_wf %>%
+ # tune_grid(
+  #  grid = 5,
+  #  resamples = train_folds,
+ #   metrics = metric_set(mn_log_loss)
+ # )
+#parallel::stopCluster(cluster)
+#tictoc::toc()
+
 ```
-
 ```{r}
+
+rf_best_param <- rf_tune_results %>% 
+  select_best(metric = "mn_log_loss")
+
+rf_final_wf <- rf_wf %>% 
+  finalize_workflow(rf_best_param)
+
+rf_fit <- rf_final_wf %>% 
+  fit(train)
+
+
+rf_cv_results <- rf_tune_wf %>% 
+     tune_grid (
+       grid = 10,
+    resamples = train_folds,
+    metrics = metric_set(mn_log_loss)
+  )
+
+rf_cv_results %>% 
+  show_best()
+
+submission <- rf_fit %>%
+  augment(competition) %>%
+  rename(
+    prob_A = ".pred_0-250000",
+    prob_B = ".pred_250000-350000",
+    prob_C = ".pred_350000-450000",
+    prob_D = ".pred_450000-650000",
+    prob_E = ".pred_650000+"
+  ) %>%
+  select(id, starts_with ("prob"))
+
+write.csv(submission, "submissionRF.csv", row.names = FALSE)
+
 rf_tune_results %>% 
   show_best()
 
 
 
 ```
-## Decision Tree
 
-```{r}
-dt_spec <- decision_tree(tree = tune()) %>% 
-  set_engine("rpart") %>% 
-  set_mode("classification")
-
-dt_recipe <- recipe(priceRange ~., data = train) %>% 
-  step_normalize(all_numeric_predictors()) %>% 
-  step_rm(all_nominal_predictors) %>% 
-  step_rm(description) %>% 
-  step_rm(latitude) %>% 
-  step_rm(longitude) %>% 
-  step_dummy(all_nominal_predictors()) %>% 
-  step_impute_median(all_numeric_predictors())
-  
-
-dt_wf <- workflow() %>% 
-  add_model(dt_spec) %>% 
-  add_recipe(dt_recipe)
-
-
-
-
-```
-
-
-```{r}
-n_cores <- parallel::detectCores()
-cluster <- parallel::makeCluster(n_cores - 3, type = "PSOCK")
-doParallel::registerDoParallel(cluster)
-tictoc::tic()
-dt_tune_results <- rf_tune_wf %>%
-  tune_grid(
-    grid = 2,
-    resamples = train_folds,
-    metrics = metric_set(recall)
-  )
-parallel::stopCluster(cluster)
-tictoc::toc()
-
-dt_tune_results %>% 
-  show_best()
 ```
 
 ```{r}
@@ -325,13 +432,6 @@ dt_tune_results %>%
 ## References
 ```{r}
 
-
-
-```
-
-You can add options to executable code like this
-
-```{r}
 
 
 ```

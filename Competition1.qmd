@@ -391,7 +391,7 @@ rf_cv_results <- rf_tune_wf %>%
 rf_best_param <- rf_cv_results %>% 
   select_best(metric = "mn_log_loss")
 
-rf_final_wf <- rf_wf %>% 
+rf_final_wf <- rf_tune_wf %>% 
   finalize_workflow(rf_best_param)
 
 rf_fit <- rf_final_wf %>% 
@@ -416,7 +416,7 @@ submission <- rf_fit %>%
 
 write.csv(submission, "submissionRF.csv", row.names = FALSE)
 
-rf_tune_results %>% 
+rf_cv_results %>% 
   show_best()
 
 

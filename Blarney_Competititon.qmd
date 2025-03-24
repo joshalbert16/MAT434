@@ -66,11 +66,11 @@ cl <- parallel::makeCluster(n_cores - 1, type = "PSOCK")
 doParallel::registerDoParallel(cl)
 tictoc::tic()
 bt_tune_results <- bt_wf %>%
-  tune_bayes(
+  tune_grid(
     resamples = data_folds,
     metrics = metric_set(mn_log_loss),
     initial = 5,
-    control = control_bayes(parallel_over = "everything")
+    control = control_grid(parallel_over = "everything")
   )
 tictoc::toc()
 doParallel::stopImplicitCluster()
@@ -79,7 +79,7 @@ unregister()
 ```
 
 ```{r}
-bt_fit |>
+bt_tune_results |>
   augment(data) |>
   mn_log_loss(kissed, .pred_yes)
 ```
@@ -108,12 +108,11 @@ my_metrics <- metric_set(accuracy, mn_log_loss)
 # SVM Model
 
 ```{r}
-svm_spec <- svm_poly(cost = tune(), scale_factor = tune(), margin = tune()) |>
+svm_spec <- svm_poly(cost = tune()) |>
+  set_engine("kernlab") %>% 
   set_mode("classification")
 svm_rec <- recipe(kissed ~ ., data = data) |>
   step_rm("id") |>
-  step_impute_knn(all_numeric_predictors()) |>
-  step_impute_mode(all_nominal_predictors()) |>
   step_dummy(all_nominal_predictors()) %>% 
   step_normalize(all_numeric_predictors())
 
@@ -122,41 +121,47 @@ svm_wf <- workflow() |>
   add_recipe(svm_rec)
 
  
-n_cores <- parallel::detectCores()
-cl <- parallel::makeCluster(n_cores - 1, type = "PSOCK")
-doParallel::registerDoParallel(cl)
-tictoc::tic()
+# n_cores <- parallel::detectCores()
+# cl <- parallel::makeCluster(n_cores - 1, type = "PSOCK")
+# doParallel::registerDoParallel(cl)
+# tictoc::tic()
 svm_tune_results <- svm_wf %>%
-  tune_bayes(
+  tune_grid(
     resamples = data_folds,
     metrics = metric_set(mn_log_loss),
-    initial = 5,
-    control = control_bayes(parallel_over = "everything")
+    grid = 5
   )
-tictoc::toc()
-doParallel::stopImplicitCluster()
-unregister()
+# tictoc::toc()
+# doParallel::stopImplicitCluster()
+# unregister()
 
-best_svm <- svm_tune_results %>% 
-  select_best()
+svm_best_param <- svm_tune_results %>% 
+  select_best(metric = "mn_log_loss")
+
+
 svm_final_wf <- svm_wf %>% 
-  finalize_workflow(best_svm)
-
+  finalize_workflow(svm_best_param)
 
 svm_fit <- svm_final_wf %>% 
   fit(data)
 
+
 ```
 
 ```{r}
-bt_fit |>
+svm_fit |>
   augment(data) |>
-  mn_log_loss(kissed, .pred_yes)
+  accuracy(kissed, .pred_class)
 ```
 
 
 
 ```{r}
 
+my_submission <- svm_fit %>%
+  augment(comp) %>%
+  rename(kissed = .pred_yes) %>%
+  select(id, kissed)
+write.csv(my_submission, "submissionJoshSVM.csv", row.names = FALSE)
 ```
 

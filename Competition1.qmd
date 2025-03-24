@@ -381,7 +381,14 @@ rf_tune_wf <- workflow() %>%
 ```
 ```{r}
 
-rf_best_param <- rf_tune_results %>% 
+
+rf_cv_results <- rf_tune_wf %>% 
+     tune_grid (
+       grid = 10,
+    resamples = train_folds,
+    metrics = metric_set(mn_log_loss)
+  )
+rf_best_param <- rf_cv_results %>% 
   select_best(metric = "mn_log_loss")
 
 rf_final_wf <- rf_wf %>% 
@@ -391,12 +398,7 @@ rf_fit <- rf_final_wf %>%
   fit(train)
 
 
-rf_cv_results <- rf_tune_wf %>% 
-     tune_grid (
-       grid = 10,
-    resamples = train_folds,
-    metrics = metric_set(mn_log_loss)
-  )
+
 
 rf_cv_results %>% 
   show_best()

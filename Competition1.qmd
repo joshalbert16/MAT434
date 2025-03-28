@@ -425,7 +425,7 @@ rf_cv_results %>%
 
 
 ```
-The random forest model did not result in a better log loss metric than the Decision Tree model. In the original model of the random forest the "trees" parameter was tuned. In the second model, "min_n" was tuned but did not yield better results.
+The random forest model did not result in a better log loss metric (1.082765) than the Decision Tree model. In the original model of the random forest the "trees" parameter was tuned. In the second model, "min_n" was tuned but did not yield better results.
 
 ## Boosted Tree
 ```{r}
@@ -435,22 +435,24 @@ set_engine("xgboost") %>%
 set_mode("classification")
 
 boost_tree_rec <- recipe(priceRange ~., data = train) %>% 
+  step_rm(hasSpa) %>% 
   step_rm(description) %>%
    step_rm(latitude) %>% 
   step_rm(longitude) %>% 
-    step_novel(city) %>% 
-  step_normalize(all_nominal_predictors()) %>% 
+    step_novel(city) %>%
+   step_normalize(all_numeric_predictors()) %>% 
   step_unknown(all_nominal_predictors()) %>% 
     step_other(all_nominal_predictors()) %>%
   step_dummy(all_nominal_predictors()) %>% 
   step_impute_median(all_numeric_predictors())
+
+
 
 bt_tree_wf <- workflow() %>% 
   add_model(boost_tree_spec) %>% 
   add_recipe(boost_tree_rec)
 
 ```
-
 
 ```{r}
 

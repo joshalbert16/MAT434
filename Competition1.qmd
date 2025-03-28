@@ -23,11 +23,11 @@ library(knitr)
 library(ggplot2)
 
 
-unregister <- function() {
-  env <- foreach :::.foreachGlobals
-  rm(list=ls(name=env),
-     pos=env)
-}
+#unregister <- function() {
+  #env <- foreach :::.foreachGlobals
+  #rm(list=ls(name=env),
+     #pos=env)
+#}
 
 
 options(kable_styling_bootstrap_options = c("hover", "striped"))
@@ -347,14 +347,16 @@ write.csv(submission, "submissionKNN.csv", row.names = FALSE)
 
 ```{r}
 
-rf_tune_spec <- rand_forest(trees = tune()) %>% 
+rf_tune_spec <- rand_forest(min_n = tune()) %>% 
   set_engine("ranger") %>% 
   set_mode("classification")
 
 rf_tune_rec <- recipe(priceRange ~., data = train) %>% 
   step_rm(description) %>% 
+  step_rm(latitude) %>% 
+  step_rm(longitude) %>% 
+    step_novel(city) %>% 
   step_unknown(all_nominal_predictors()) %>% 
-  step_novel(all_nominal_predictors()) %>% 
   step_other(all_nominal_predictors()) %>% 
   step_dummy(all_nominal_predictors()) %>% 
   step_impute_median(all_numeric_predictors())
@@ -379,6 +381,7 @@ rf_tune_wf <- workflow() %>%
 #tictoc::toc()
 
 ```
+
 ```{r}
 
 
@@ -388,6 +391,7 @@ rf_cv_results <- rf_tune_wf %>%
     resamples = train_folds,
     metrics = metric_set(mn_log_loss)
   )
+
 rf_best_param <- rf_cv_results %>% 
   select_best(metric = "mn_log_loss")
 
@@ -396,7 +400,6 @@ rf_final_wf <- rf_tune_wf %>%
 
 rf_fit <- rf_final_wf %>% 
   fit(train)
-
 
 
 
@@ -422,10 +425,57 @@ rf_cv_results %>%
 
 
 ```
+The random forest model did not result in a better log loss metric than the Decision Tree model. In the original model of the random forest the "trees" parameter was tuned. In the second model, "min_n" was tuned but did not yield better results.
+
+## Boosted Tree
+```{r}
+
+boost_tree_spec <- boost_tree(trees = tune()) %>% 
+set_engine("xgboost") %>% 
+set_mode("classification")
+
+boost_tree_rec <- recipe(priceRange ~., data = train) %>% 
+  step_rm(description) %>%
+   step_rm(latitude) %>% 
+  step_rm(longitude) %>% 
+    step_novel(city) %>% 
+  step_normalize(all_nominal_predictors()) %>% 
+  step_unknown(all_nominal_predictors()) %>% 
+    step_other(all_nominal_predictors()) %>%
+  step_dummy(all_nominal_predictors()) %>% 
+  step_impute_median(all_numeric_predictors())
+
+bt_tree_wf <- workflow() %>% 
+  add_model(boost_tree_spec) %>% 
+  add_recipe(boost_tree_rec)
 
 ```
 
+
 ```{r}
+
+bt_cv_results <- bt_tree_wf %>% 
+     tune_grid (
+       grid = 2,
+    resamples = train_folds,
+    metrics = metric_set(mn_log_loss)
+  )
+
+bt_best_param <- bt_cv_results %>% 
+  show_best(metric = "mn_log_loss")
+
+bt_final_wf <- bt_tree_wf %>% 
+  finalize_workflow(bt_best_param)
+
+bt_fit <- bt_final_wf %>% 
+  fit(train)
+
+
+bt_cv_results %>% 
+  show_best()
+
+
+
 
 ```
 

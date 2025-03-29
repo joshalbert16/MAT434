@@ -212,7 +212,7 @@ In this model we chose to tune the tree() funciton, so we used "tune_grid" and o
 #tictoc::tic()
 dt_tune_results <- dt_wf %>%
   tune_grid(
-    grid = 3,
+    grid = 10,
     resamples = train_folds,
     metrics = metric_set(mn_log_loss)
   )
@@ -347,7 +347,7 @@ write.csv(submission, "submissionKNN.csv", row.names = FALSE)
 
 ```{r}
 
-rf_tune_spec <- rand_forest(min_n = tune()) %>% 
+rf_tune_spec <- rand_forest(trees = tune()) %>% 
   set_engine("ranger") %>% 
   set_mode("classification")
 
@@ -355,7 +355,7 @@ rf_tune_rec <- recipe(priceRange ~., data = train) %>%
   step_rm(description) %>% 
   step_rm(latitude) %>% 
   step_rm(longitude) %>% 
-    step_novel(city) %>% 
+  step_novel(city) %>% 
   step_unknown(all_nominal_predictors()) %>% 
   step_other(all_nominal_predictors()) %>% 
   step_dummy(all_nominal_predictors()) %>% 
@@ -425,7 +425,7 @@ rf_cv_results %>%
 
 
 ```
-The random forest model did not result in a better log loss metric (1.082765) than the Decision Tree model. In the original model of the random forest the "trees" parameter was tuned. In the second model, "min_n" was tuned but did not yield better results.
+The random forest model did result in a better log loss metric (1.081920) than the Decision Tree model. In the original model of the random forest the "trees" parameter was tuned. In the second model, "min_n" was tuned but did not yield better results and both trees() and min_n() together did not yield better resluts than trees alone.
 
 ## Boosted Tree
 ```{r}
@@ -458,13 +458,14 @@ bt_tree_wf <- workflow() %>%
 
 bt_cv_results <- bt_tree_wf %>% 
      tune_grid (
-       grid = 2,
+       grid = 10,
     resamples = train_folds,
     metrics = metric_set(mn_log_loss)
   )
 
 bt_best_param <- bt_cv_results %>% 
-  show_best(metric = "mn_log_loss")
+  select_best(metric = "mn_log_loss")
+
 
 bt_final_wf <- bt_tree_wf %>% 
   finalize_workflow(bt_best_param)
@@ -480,13 +481,28 @@ bt_cv_results %>%
 
 
 ```
+```{r}
+submission <- bt_fit %>%
+  augment(competition) %>%
+  rename(
+    prob_A = ".pred_0-250000",
+    prob_B = ".pred_250000-350000",
+    prob_C = ".pred_350000-450000",
+    prob_D = ".pred_450000-650000",
+    prob_E = ".pred_650000+"
+  ) %>%
+  select(id, starts_with ("prob"))
+
+write.csv(submission, "submissionBT.csv", row.names = FALSE)
+```
+
 
 ## Model Interpretation and Inference
 
-
+In this report, 4 models were examined in order to predict the price range of houses in Texas. By creating a Decision Tree, K-Nearest Neighbor, Random Forest, and a Boosted Tree model, comparisons could be made through the "Mean Log Loss" metric. In RStudio, the log loss was lowest with the Random Forest model. All of the models were tuned through grid tuning to 10 locations. To get more accurate results, it may be useful to utilize the description column, as it may have useful key words that contribute to the prediction of its price range. In these models, extra tuning did not seem to change the predictive power of the model.
 
 ## Conclusion
-
+After consideration of all the models made in this report, the Random Forest model output the lowest log loss in RStudio. The Decision Tree model however was a better predictor in the Kaggle Competition. Either the Randomn Forest or the Decision Tree model would be useful to predict the price ranges of houses on Zillow.
 
 
 ## References

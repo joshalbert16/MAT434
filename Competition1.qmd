@@ -481,6 +481,7 @@ bt_cv_results %>%
 
 
 ```
+The Boosted tree model creates multiple decision trees based on the previous decisions made by the trees. This is thought to increase the likelihood of predictive power from the decision tree because it can edit the path of predictable power through the trees that are created. The log loss from this model however was not better than the decision tree alone.
 ```{r}
 submission <- bt_fit %>%
   augment(competition) %>%

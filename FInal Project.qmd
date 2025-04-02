@@ -37,6 +37,8 @@ data <- read.csv("https://huggingface.co/datasets/kheejay88/water_potability/raw
 
 ## Splitting the data into training and testing data then creating cross validation folds 
 
+data$Potability <- as.factor(data$Potability)
+
 set.seed(678)
 data_splits <- initial_split(data, strata = Potability)
   
@@ -45,10 +47,10 @@ train <- training(data_splits)
 test <- testing(data_splits)
 
 set.seed (254)
-train_folds <- vfold_cv(data, v = 10, strata = Potability)
+train_folds <- vfold_cv(train, v = 10, strata = Potability)
 
 
-train$Potability <- as.factor(train$Potability)
+
 ```
 
 
@@ -87,21 +89,6 @@ knn_wf <- workflow() %>%
   add_recipe(knn_rec)
 
 
-
-#knn_cv_results <- knn_wf %>% 
- # tune_grid(
-  #  grid = 10,
-   # resamples = (train_folds),
-    #metrics = metric_set(mn_log_loss)
-  #)
-
-
-#knn_best <- knn_cv_results %>% 
- # select_best(metric = "mn_log_loss")
-
-#knn_final_wf <- knn_wf %>% 
- # finalize_workflow(knn_cv_results)
-
 knn_fit <- knn_wf %>%
   fit(train)
 
@@ -109,16 +96,123 @@ knn_fit <- knn_wf %>%
 knn_fit %>%
   augment(train) %>%
   accuracy(Potability, .pred_class)
-#knn_fit %>% 
- # fit(train)
 
-#knn_fit %>% 
-#  select_best()
+```
+```{r}
+#train2 <- train %>% 
+#  mutate(Potability = as.integer(Potability))
 
-#knn_cv_results %>% 
- # show_best()
+#train_folds2 <- train2 %>% 
+ # vfold_cv(train2, v = 10)
+
+knn_tune_spec <- nearest_neighbor(neighbors = tune()) %>% 
+  set_engine("kknn") %>% 
+  set_mode("classification")
+
+knn_tune_rec <- recipe(Potability ~., data = train) %>% 
+  step_normalize(all_numeric_predictors()) %>% 
+  step_impute_median(all_numeric_predictors()) %>% 
+  step_dummy(all_nominal_predictors())
+
+knn_tune_wf <- workflow() %>% 
+  add_model(knn_tune_spec) %>% 
+  add_recipe(knn_tune_rec)
+
+
+knn_cv_tune_results <- knn_tune_wf %>% 
+  tune_grid(
+    grid = 10,
+    resamples = (train_folds),
+    metrics = metric_set(accuracy)
+  )
+knn_cv_tune_results %>% 
+  collect_metrics()
+
+knn_tune_best <- knn_cv_tune_results %>% 
+  select_best(metric = "accuracy")
+
+knn_final_tune_wf <- knn_tune_wf %>% 
+  finalize_workflow(knn_tune_best)
+
+knn_tune_fit <- knn_final_tune_wf %>% 
+  fit(train)
+
+knn_tune_fit %>% 
+  augment(train) %>% 
+  accuracy(Potability, .pred_class)
+
 ```
 
+
+
+
+
+```{r}
+
+dt_spec <- decision_tree() %>% 
+  set_engine("rpart") %>% 
+  set_mode("classification")
+
+dt_rec <- recipe(Potability ~ ., data = train) %>% 
+  step_normalize(all_numeric_predictors()) %>% 
+  step_impute_mean(all_numeric_predictors()) %>% 
+  step_dummy(all_nominal_predictors())
+
+dt_wf <- workflow() %>% 
+  add_model(dt_spec) %>% 
+  add_recipe(dt_rec)
+
+
+dt_fit <- dt_wf %>% 
+  fit(train)
+
+dt_fit %>% 
+  augment(train) %>% 
+  accuracy(Potability, .pred_class)
+
+
+```
+
+
+```{r}
+dt_tune_spec <- decision_tree(min_n = tune(), tree_depth = tune()) %>% 
+  set_engine("rpart") %>% 
+  set_mode("classification")
+
+dt_tune_rec <- recipe(Potability ~., data = train) %>% 
+step_normalize(all_numeric_predictors()) %>% 
+  step_impute_median(all_numeric_predictors()) %>% 
+  step_dummy(all_nominal_predictors())
+
+
+dt_tune_wf <- workflow() %>% 
+  add_model(dt_tune_spec) %>% 
+  add_recipe(dt_tune_rec)
+
+
+dt_cv_tune_fit <- dt_tune_wf %>% 
+  tune_grid(
+    grid = 30,
+    resamples = (train_folds),
+    metrics = metric_set(accuracy)
+  )
+dt_cv_tune_fit %>% 
+  collect_metrics()
+
+dt_tune_best <- dt_cv_tune_fit %>% 
+  select_best(metric = "accuracy")
+
+dt_final_tune_wf <- dt_tune_wf %>% 
+  finalize_workflow(dt_tune_best)
+
+dt_cv_tune_fit <- dt_final_tune_wf %>% 
+  fit(train)
+
+
+dt_cv_tune_fit %>% 
+  augment(train) %>% 
+  accuracy(Potability, .pred_class)
+```
 
 
 

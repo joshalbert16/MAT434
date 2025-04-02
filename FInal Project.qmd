@@ -1,0 +1,128 @@
+---
+title: "Final Document"
+format: html
+---
+
+## Quarto
+
+Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+
+## Running Code
+
+When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+
+```{r}
+
+library(tidyverse)
+library(tidymodels)
+library(patchwork)
+library(kableExtra)
+library(ggridges)
+library(marginaleffects)
+library(reshape2)
+library(knitr)
+library(ggplot2)
+library(kknn)
+
+data <- read.csv("https://huggingface.co/datasets/kheejay88/water_potability/raw/main/water_potability.csv")
+
+
+
+
+```
+
+#Exploratory Data Analysis
+
+```{r}
+
+## Splitting the data into training and testing data then creating cross validation folds 
+
+set.seed(678)
+data_splits <- initial_split(data, strata = Potability)
+  
+train <- training(data_splits)
+
+test <- testing(data_splits)
+
+set.seed (254)
+train_folds <- vfold_cv(data, v = 10, strata = Potability)
+
+
+train$Potability <- as.factor(train$Potability)
+```
+
+
+
+```{r}
+
+
+train %>% 
+ggplot() +
+  geom_histogram(aes(x = Conductivity))
+
+
+conductivity_cut <- train %>% 
+  mutate(bins = cut(x = Conductivity, breaks = 5))
+
+conductivity_cut %>% 
+  ggplot() +
+  geom_boxplot(aes(x = bins, y = Organic_carbon, fill = Potability)) 
+```
+
+
+
+```{r}
+
+knn_spec <- nearest_neighbor() %>% 
+  set_engine("kknn") %>% 
+  set_mode("classification")
+
+knn_rec <- recipe(Potability ~ ., data = train) %>% 
+  step_normalize(all_numeric_predictors()) %>%
+  step_impute_median(all_numeric_predictors()) %>% 
+step_dummy(all_nominal_predictors())
+
+knn_wf <- workflow() %>% 
+  add_model(knn_spec) %>% 
+  add_recipe(knn_rec)
+
+
+
+#knn_cv_results <- knn_wf %>% 
+ # tune_grid(
+  #  grid = 10,
+   # resamples = (train_folds),
+    #metrics = metric_set(mn_log_loss)
+  #)
+
+
+#knn_best <- knn_cv_results %>% 
+ # select_best(metric = "mn_log_loss")
+
+#knn_final_wf <- knn_wf %>% 
+ # finalize_workflow(knn_cv_results)
+
+knn_fit <- knn_wf %>%
+  fit(train)
+
+
+knn_fit %>%
+  augment(train) %>%
+  accuracy(Potability, .pred_class)
+#knn_fit %>% 
+ # fit(train)
+
+#knn_fit %>% 
+#  select_best()
+
+#knn_cv_results %>% 
+ # show_best()
+```
+
+
+
+
+
+
+
+The `echo: false` option disables the printing of code (only output is displayed).

@@ -23,16 +23,197 @@ library(reshape2)
 library(knitr)
 library(ggplot2)
 library(kknn)
+library(ggforce)
 
 data <- read.csv("https://huggingface.co/datasets/kheejay88/water_potability/raw/main/water_potability.csv")
+
+data1 <- read.csv("https://storage.googleapis.com/kagglesdsdata/datasets/4933767/8305330/Crop_Recommendation.csv?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=gcp-kaggle-com%40kaggle-161607.iam.gserviceaccount.com%2F20250414%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20250414T145419Z&X-Goog-Expires=259200&X-Goog-SignedHeaders=host&X-Goog-Signature=55857991c5dbc4c3057bd117c036e2ac39c17c3d85479480a42ac320e310c91a58566e9466d98d9b0966699744f08e3dcd62880c77adcbe34ddc9a6e2d89ff05eb7d489d625fdce36ad9213a726f2b0d9a45edcd14deb5f7e5b0f418c844cc014493ba69a994f4e3076329c1c03ae59c3e564e31ac3d614920a4ed28412f5a9640ee14837a086edbad82deed368bed2110a2cfc5adb72fe51838150477f6075f9987b29bb6b993891fe8ea7565e665966a0bee2ab0dcb48c326eae2b69757457b6d412b136d33343d505c2af989014ec00e36c838d076b7399aa2c0e71d665a3f80b46a4e5c5fa37c33a39460243ff1fff0825e3bf1bcf6882471ab63bc57fc6")
+
+```
+
+
+```{r}
+
+
+```
+
+
+
+
+
+
+```{r}
+
+data1$Crop <- as.factor(data1$Crop)
+
+set.seed(298)
+data_splits1 <- initial_split(data1)
+  
+train1 <- training(data_splits1)
+
+test1 <- testing(data_splits1)
+
+set.seed (247)
+train_folds1 <- vfold_cv(train1, v = 10)
+
+
+```
+
+
+
+```{r}
+
+NitrogenPlot <- train1 %>% 
+  ggplot() +
+  geom_boxplot(aes(x = Nitrogen, y = Crop, fill = Crop)) +
+  geom_boxplot(aes(x = Nitrogen)) +
+  labs(title = "Soil Nitrogen in each Crop")
+NitrogenPlot
+
+AvgNit <- train1 %>% 
+  summarise(
+  mean(Nitrogen)
+)
+AvgNit
+
+
+PhosphorusPlot <- train1 %>% 
+  ggplot() +
+  geom_boxplot(aes(x = Phosphorus, y = Crop, fill = Crop)) +
+  geom_boxplot(aes(x = Phosphorus)) +
+  labs(title = "Soil Phosphorus in each Crop")
+PhosphorusPlot
+
+AvgPho <- train1 %>% 
+  summarise(
+    mean(Phosphorus)
+  )
+AvgPho
+  
+
+
+
+PotassiumPlot <- train1 %>% 
+  ggplot() +
+  geom_boxplot(aes(x = Potassium, y = Crop, fill = Crop)) +
+  geom_boxplot(aes(x = Potassium)) +
+  labs(title = "Potassium in each Crop")
+PotassiumPlot
+
+AvgPot <- train1 %>% 
+  summarise(
+    mean(Potassium)
+  )
+AvgPot
+
+
+TemperaturePlot <- train1 %>% 
+  ggplot() + 
+  geom_boxplot(aes(x = Temperature, y = Crop, fill = Crop)) +
+  geom_boxplot(aes(x = Temperature)) +
+  labs(title = "Temperature of each Crop")
+TemperaturePlot
+
+AvgTemp <- train1 %>% 
+  summarise(
+    mean(Temperature)
+  )
+AvgTemp
+
+
+
+HumidityPlot <- train1 %>% 
+  ggplot() +
+  geom_boxplot(aes(x = Humidity, y = Crop, fill = Crop)) +
+  geom_boxplot(aes(x = Humidity)) +
+  labs(title = "Humidity of each Crop")
+HumidityPlot
+
+AvgHum <- train1 %>% 
+  summarise(
+    mean(Humidity)
+  )
+AvgHum
+
+
+
+
+phPlot <- train1 %>% 
+  ggplot() +
+  geom_boxplot(aes(x = pH_Value, y = Crop, fill = Crop)) +
+  geom_boxplot(aes(x = pH_Value)) +
+  labs(title = "Soil pH of each Crop")
+phPlot
+
+AvgpH <- train1 %>% 
+  summarise(
+    mean(pH_Value)
+  )
+AvgpH
+
+
+
+
+RainfallPlot <- train1 %>% 
+  ggplot() +
+  geom_boxplot(aes(x = Rainfall, y = Crop, fill = Crop)) +
+  geom_boxplot(aes(x = Rainfall)) +
+  labs(title = "Rainfall of each Crop")
+RainfallPlot
+
+
 
 
 
 
 ```
 
-#Exploratory Data Analysis
 
+```{r}
+
+
+```
+
+
+```{r}
+
+dt_spec1 <- decision_tree() %>% 
+  set_engine("rpart") %>% 
+  set_mode("classification")
+
+dt_rec1 <- recipe(Crop ~ ., data = train1) %>% 
+  step_normalize(all_numeric_predictors()) %>% 
+  step_impute_mean(all_numeric_predictors()) %>% 
+  step_dummy(all_nominal_predictors())
+
+dt_wf1 <- workflow() %>% 
+  add_model(dt_spec1) %>% 
+  add_recipe(dt_rec1)
+
+
+dt_fit1 <- dt_wf1 %>% 
+  fit(train1)
+
+dt_fit1 %>% 
+  augment(train1) %>% 
+  accuracy(Crop, .pred_class)
+
+
+dt_fit1 %>%
+  extract_fit_engine() %>%
+  rpart.plot::rpart.plot()
+
+```
+
+
+
+
+
+
+
+
+
+## Setting up the Data
 ```{r}
 
 ## Splitting the data into training and testing data then creating cross validation folds 
@@ -53,6 +234,74 @@ train_folds <- vfold_cv(train, v = 10, strata = Potability)
 
 ```
 
+# Statement of Purpose
+This report includes a data set of water quality parameters with measurements that may impact the potability of water. The following data analysis and models are being made in order to describe the most likely individual or combined parameters to impact the potability of the water.
+
+
+#Exploratory Data Analysis
+
+In the Decision Tree Model building section below, the potability of water classification is put through the decision tree making process. By visualizing the decision tree, we can isolate the predictors it chose to use in that decision tree. 
+
+The predictors that the decision tree model chose were, Sulfates, pH, Hardness, and Solids.
+
+## Logistic Regression
+```{r}
+log_reg_spec <- logistic_reg() %>% 
+  set_engine("glm") %>% 
+  set_mode("classification")
+
+
+log_reg_rec <- recipe(Potability ~ Trihalomethanes, data = train) %>% 
+  step_impute_median(all_numeric_predictors()) 
+
+
+log_reg_wf <- workflow() %>% 
+  add_model(log_reg_spec) %>% 
+  add_recipe(log_reg_rec)
+
+
+log_reg_fit <- log_reg_wf %>%
+  fit(train)
+
+
+log_reg_fit %>%
+  augment(train) %>%
+  precision(Potability, .pred_class)
+
+log_reg_fit %>%
+  extract_fit_engine() %>%
+  tidy() %>%
+  kable()
+
+```
+
+
+```{r}
+mfx <- slopes(log_reg_fit %>% extract_fit_parsnip(),
+              newdata = train,
+              variables = "Trihalomethanes",
+              type = "prob") %>%
+  tibble()
+
+
+
+mfx %>%
+  filter(group == "1") %>%
+  select(Trihalomethanes, estimate, conf.low, conf.high) %>%
+  ggplot() +
+  geom_line(aes(x = Trihalomethanes, y = estimate), color = "purple", lty = "dashed", lwd = 1.5) +
+  geom_ribbon(aes(x = Trihalomethanes, ymin = conf.low, ymax = conf.high),
+              fill = "grey", alpha = 0.5) +
+  labs(x = "Trihalomethanes",
+       y = "Marginal Effect",
+       title = "Marginal Effects of Unit Increase in Trihalomethanes") + 
+  theme_bw()
+```
+
+
+
+
+
 
 
 ```{r}
@@ -68,10 +317,53 @@ conductivity_cut <- train %>%
 
 conductivity_cut %>% 
   ggplot() +
-  geom_boxplot(aes(x = bins, y = Organic_carbon, fill = Potability)) 
+  geom_histogram(aes(x = Hardness))
+
+
+Con_Tri_lm <- lm(Conductivity ~ Potability, data = train)
+summary(Con_Tri_lm)
+
+
+  ggplot(train, aes(x = Turbidity, y = Conductivity, color = Potability)) +
+    geom_point() +
+    geom_smooth(method = "lm") +
+    facet_wrap(~Potability)
+
+ggplot(train, aes(x = Turbidity, y = Organic_carbon, color = Potability)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  facet_wrap(~Potability)
+
+ggplot(train, aes(x = Solids, y = Turbidity, color = Potability)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  facet_wrap(~Potability)
+
+
+matrix1 <- train %>% 
+  select(Sulfate, ph, Hardness, Solids, 10) %>% 
+  ggplot(aes(x = .panel_x, y = .panel_y, color = Potability, fill = Potability)) + 
+  geom_point(alpha = .15) +
+  geom_autodensity(alpha = .3) +
+  facet_matrix(vars(-Potability), layer.diag = 2) + 
+    scale_color_brewer(palette = "Dark2") + 
+    scale_fill_brewer(palette = "Dark2")
+matrix1
+
+matrix2 <- train %>% 
+  select(5:9, 10) %>% 
+    ggplot(aes(x = .panel_x, y = .panel_y, color = Potability, fill = Potability)) + 
+  geom_point(alpha = .15) +
+  geom_autodensity(alpha = .3) +
+  facet_matrix(vars(-Potability), layer.diag = 2) + 
+    scale_color_brewer(palette = "Dark2") + 
+    scale_fill_brewer(palette = "Dark2")
+matrix2
+
 ```
 
 
+#KNN Model Not Tuned
 
 ```{r}
 
@@ -98,12 +390,9 @@ knn_fit %>%
   accuracy(Potability, .pred_class)
 
 ```
-```{r}
-#train2 <- train %>% 
-#  mutate(Potability = as.integer(Potability))
 
-#train_folds2 <- train2 %>% 
- # vfold_cv(train2, v = 10)
+## KNN Model Tuned
+```{r}
 
 knn_tune_spec <- nearest_neighbor(neighbors = tune()) %>% 
   set_engine("kknn") %>% 
@@ -145,7 +434,7 @@ knn_tune_fit %>%
 
 
 
-
+## Decision Tree Model 
 
 ```{r}
 
@@ -171,9 +460,12 @@ dt_fit %>%
   accuracy(Potability, .pred_class)
 
 
+dt_fit %>%
+  extract_fit_engine() %>%
+  rpart.plot::rpart.plot()
 ```
 
-
+## Decision Tree Model Tuned
 ```{r}
 dt_tune_spec <- decision_tree(min_n = tune(), tree_depth = tune()) %>% 
   set_engine("rpart") %>% 
@@ -212,6 +504,8 @@ dt_cv_tune_fit <- dt_final_tune_wf %>%
 dt_cv_tune_fit %>% 
   augment(train) %>% 
   accuracy(Potability, .pred_class)
+
+
 ```
 
 

@@ -1,0 +1,306 @@
+---
+title: "Water_Potability_Fail"
+format: html
+---
+
+## Setting up the Data
+```{r}
+
+
+data <- read.csv("https://huggingface.co/datasets/kheejay88/water_potability/raw/main/water_potability.csv")
+
+## Splitting the data into training and testing data then creating cross validation folds 
+
+data$Potability <- as.factor(data$Potability)
+
+set.seed(678)
+data_splits <- initial_split(data, strata = Potability)
+  
+train <- training(data_splits)
+
+test <- testing(data_splits)
+
+set.seed (254)
+train_folds <- vfold_cv(train, v = 10, strata = Potability)
+
+
+
+```
+
+# Statement of Purpose
+This report includes a data set of water quality parameters with measurements that may impact the potability of water. The following data analysis and models are being made in order to describe the most likely individual or combined parameters to impact the potability of the water.
+
+
+#Exploratory Data Analysis
+
+In the Decision Tree Model building section below, the potability of water classification is put through the decision tree making process. By visualizing the decision tree, we can isolate the predictors it chose to use in that decision tree. 
+
+The predictors that the decision tree model chose were, Sulfates, pH, Hardness, and Solids.
+
+## Logistic Regression
+```{r}
+log_reg_spec <- logistic_reg() %>% 
+  set_engine("glm") %>% 
+  set_mode("classification")
+
+
+log_reg_rec <- recipe(Potability ~ Trihalomethanes, data = train) %>% 
+  step_impute_median(all_numeric_predictors()) 
+
+
+log_reg_wf <- workflow() %>% 
+  add_model(log_reg_spec) %>% 
+  add_recipe(log_reg_rec)
+
+
+log_reg_fit <- log_reg_wf %>%
+  fit(train)
+
+
+log_reg_fit %>%
+  augment(train) %>%
+  precision(Potability, .pred_class)
+
+log_reg_fit %>%
+  extract_fit_engine() %>%
+  tidy() %>%
+  kable()
+
+```
+
+
+```{r}
+mfx <- slopes(log_reg_fit %>% extract_fit_parsnip(),
+              newdata = train,
+              variables = "Trihalomethanes",
+              type = "prob") %>%
+  tibble()
+
+
+
+mfx %>%
+  filter(group == "1") %>%
+  select(Trihalomethanes, estimate, conf.low, conf.high) %>%
+  ggplot() +
+  geom_line(aes(x = Trihalomethanes, y = estimate), color = "purple", lty = "dashed", lwd = 1.5) +
+  geom_ribbon(aes(x = Trihalomethanes, ymin = conf.low, ymax = conf.high),
+              fill = "grey", alpha = 0.5) +
+  labs(x = "Trihalomethanes",
+       y = "Marginal Effect",
+       title = "Marginal Effects of Unit Increase in Trihalomethanes") + 
+  theme_bw()
+```
+
+
+
+
+
+
+
+```{r}
+
+
+train %>% 
+ggplot() +
+  geom_histogram(aes(x = Conductivity))
+
+
+conductivity_cut <- train %>% 
+  mutate(bins = cut(x = Conductivity, breaks = 5))
+
+conductivity_cut %>% 
+  ggplot() +
+  geom_histogram(aes(x = Hardness))
+
+
+Con_Tri_lm <- lm(Conductivity ~ Potability, data = train)
+summary(Con_Tri_lm)
+
+
+  ggplot(train, aes(x = Turbidity, y = Conductivity, color = Potability)) +
+    geom_point() +
+    geom_smooth(method = "lm") +
+    facet_wrap(~Potability)
+
+ggplot(train, aes(x = Turbidity, y = Organic_carbon, color = Potability)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  facet_wrap(~Potability)
+
+ggplot(train, aes(x = Solids, y = Turbidity, color = Potability)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  facet_wrap(~Potability)
+
+
+matrix1 <- train %>% 
+  select(Sulfate, ph, Hardness, Solids, 10) %>% 
+  ggplot(aes(x = .panel_x, y = .panel_y, color = Potability, fill = Potability)) + 
+  geom_point(alpha = .15) +
+  geom_autodensity(alpha = .3) +
+  facet_matrix(vars(-Potability), layer.diag = 2) + 
+    scale_color_brewer(palette = "Dark2") + 
+    scale_fill_brewer(palette = "Dark2")
+matrix1
+
+matrix2 <- train %>% 
+  select(5:9, 10) %>% 
+    ggplot(aes(x = .panel_x, y = .panel_y, color = Potability, fill = Potability)) + 
+  geom_point(alpha = .15) +
+  geom_autodensity(alpha = .3) +
+  facet_matrix(vars(-Potability), layer.diag = 2) + 
+    scale_color_brewer(palette = "Dark2") + 
+    scale_fill_brewer(palette = "Dark2")
+matrix2
+
+```
+
+
+#KNN Model Not Tuned
+
+```{r}
+
+knn_spec <- nearest_neighbor() %>% 
+  set_engine("kknn") %>% 
+  set_mode("classification")
+
+knn_rec <- recipe(Potability ~ ., data = train) %>% 
+  step_normalize(all_numeric_predictors()) %>%
+  step_impute_median(all_numeric_predictors()) %>% 
+step_dummy(all_nominal_predictors())
+
+knn_wf <- workflow() %>% 
+  add_model(knn_spec) %>% 
+  add_recipe(knn_rec)
+
+
+knn_fit <- knn_wf %>%
+  fit(train)
+
+
+knn_fit %>%
+  augment(train) %>%
+  accuracy(Potability, .pred_class)
+
+```
+
+## KNN Model Tuned
+```{r}
+
+knn_tune_spec <- nearest_neighbor(neighbors = tune()) %>% 
+  set_engine("kknn") %>% 
+  set_mode("classification")
+
+knn_tune_rec <- recipe(Potability ~., data = train) %>% 
+  step_normalize(all_numeric_predictors()) %>% 
+  step_impute_median(all_numeric_predictors()) %>% 
+  step_dummy(all_nominal_predictors())
+
+knn_tune_wf <- workflow() %>% 
+  add_model(knn_tune_spec) %>% 
+  add_recipe(knn_tune_rec)
+
+
+knn_cv_tune_results <- knn_tune_wf %>% 
+  tune_grid(
+    grid = 10,
+    resamples = (train_folds),
+    metrics = metric_set(accuracy)
+  )
+knn_cv_tune_results %>% 
+  collect_metrics()
+
+knn_tune_best <- knn_cv_tune_results %>% 
+  select_best(metric = "accuracy")
+
+knn_final_tune_wf <- knn_tune_wf %>% 
+  finalize_workflow(knn_tune_best)
+
+knn_tune_fit <- knn_final_tune_wf %>% 
+  fit(train)
+
+knn_tune_fit %>% 
+  augment(train) %>% 
+  accuracy(Potability, .pred_class)
+
+```
+
+
+
+## Decision Tree Model 
+
+```{r}
+
+dt_spec <- decision_tree() %>% 
+  set_engine("rpart") %>% 
+  set_mode("classification")
+
+dt_rec <- recipe(Potability ~ ., data = train) %>% 
+  step_normalize(all_numeric_predictors()) %>% 
+  step_impute_mean(all_numeric_predictors()) %>% 
+  step_dummy(all_nominal_predictors())
+
+dt_wf <- workflow() %>% 
+  add_model(dt_spec) %>% 
+  add_recipe(dt_rec)
+
+
+dt_fit <- dt_wf %>% 
+  fit(train)
+
+dt_fit %>% 
+  augment(train) %>% 
+  accuracy(Potability, .pred_class)
+
+
+dt_fit %>%
+  extract_fit_engine() %>%
+  rpart.plot::rpart.plot()
+```
+
+## Decision Tree Model Tuned
+```{r}
+dt_tune_spec <- decision_tree(min_n = tune(), tree_depth = tune()) %>% 
+  set_engine("rpart") %>% 
+  set_mode("classification")
+
+dt_tune_rec <- recipe(Potability ~., data = train) %>% 
+step_normalize(all_numeric_predictors()) %>% 
+  step_impute_median(all_numeric_predictors()) %>% 
+  step_dummy(all_nominal_predictors())
+
+
+dt_tune_wf <- workflow() %>% 
+  add_model(dt_tune_spec) %>% 
+  add_recipe(dt_tune_rec)
+
+
+dt_cv_tune_fit <- dt_tune_wf %>% 
+  tune_grid(
+    grid = 30,
+    resamples = (train_folds),
+    metrics = metric_set(accuracy)
+  )
+dt_cv_tune_fit %>% 
+  collect_metrics()
+
+dt_tune_best <- dt_cv_tune_fit %>% 
+  select_best(metric = "accuracy")
+
+dt_final_tune_wf <- dt_tune_wf %>% 
+  finalize_workflow(dt_tune_best)
+
+dt_cv_tune_fit <- dt_final_tune_wf %>% 
+  fit(train)
+
+
+dt_cv_tune_fit %>% 
+  augment(train) %>% 
+  accuracy(Potability, .pred_class)
+
+
+```
+
+
+Concluding this report, I have found that this dataset is fabricated and does not make physical sense. It is evident that these are not actual values related to water potability based on the observations that no classifiers in the dataset have statistical significance to each other.
+The `echo: false` option disables the printing of code (only output is displayed).

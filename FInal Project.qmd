@@ -7,9 +7,7 @@ format: html
 
 Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
 
-## Running Code
-
-When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+## Setting up the Data
 
 ```{r}
 
@@ -53,6 +51,9 @@ train_folds1 <- vfold_cv(train1, v = 10)
 
 
 ```
+#Exploratory Data Analysis
+
+##Statement of Purpose
 
 These plots show the differences of the soil and climate parameters measured for each crop. Some of the parameters are very descriptive for specific crops while others are not so clear. By making a model and describing the meaning behind how crops can be classified, we will be able to make decisions on what cover crop to use on land that will not further degrade the soil for the main crop to thrive when in season. There are a lot of factors that play a part in the crop yield but these are some of the most important and easily measured parameters.
 
@@ -177,7 +178,7 @@ This plot shows the rainfall in millimeters for each crop. Many are specific to 
 
 ```
 
-
+#Model Construction and Testing
 ```{r}
 
 dt_spec1 <- decision_tree() %>% 

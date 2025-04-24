@@ -56,9 +56,9 @@ train_folds1 <- vfold_cv(train1, v = 10)
 
 
 ```
-#Exploratory Data Analysis
 
-##Statement of Purpose
+
+# Statement of Purpose
 
 These plots show the differences of the soil and climate parameters measured for different crops. Some of the parameters are very descriptive for specific crops while others are not so clear. By making a model and describing the meaning behind how crops can be classified, we will be able to make decisions on what cover crop to use on land that will not further degrade the soil for the main crop to thrive when in season. There are many factors that play a part in soil stability and crop yield but these are some of the most important and easily measured parameters.
 
@@ -66,6 +66,9 @@ Cover crops are becoming more important as our food supply is becoming more and 
 
 The combination of the correct climate and the most suitable soil composition will be examined for many of the more distinct crops in this data set. 
 
+# Exploratory Data Analysis
+
+### Nitrogen Plot
 ```{r}
 
 NitrogenPlot <- train1 %>% 
@@ -81,10 +84,11 @@ AvgNit <- train1 %>%
   summarise(
   mean(Nitrogen)
 )
-AvgNit
 ```
 This plot shows that there are some crops that are very similar in having a low nitrogen ratio need (Pomegranates, Pigeon Peas, Oranges, Mung Beans, Moth Beans, Mangos, Lentils, Kidney Beans, Grapes, Coconuts, and Apples) while the others (Watermelon, Rice, Papaya, Muskmelon, Maize, Jute, Cotton, Coffee, Chick Pea, Blackgram, and Banana) require a higher nitrogen ratio.
 
+
+### Phosphorus Plot
 ```{r}
 PhosphorusPlot <- train1 %>% 
   ggplot() +
@@ -98,10 +102,12 @@ AvgPho <- train1 %>%
   summarise(
     mean(Phosphorus)
   )
-AvgPho
+
 ```  
 In this plot, Grapes and Apples are outliers, having Phosphorus values that are much higher than the other crops. The remaining 20 crops are still spread between 3 general clusters, close to the lower quartile, close to the mean, and close to the upper quartile.
 
+
+### Potassium Plot
 ```{r}
 PotassiumPlot <- train1 %>% 
   ggplot() +
@@ -115,10 +121,11 @@ AvgPot <- train1 %>%
   summarise(
     mean(Potassium)
   )
-AvgPot
 ```
 In this plot, Potassium shows to be similar to Phosphorus in the sense that grapes and apples are large outliers and there seems to be the lower, mean, and upper quartile groups. It will be interesting to compare the other crops to one another to see if the same groups form with both parameters. 
 
+
+### Temperature Plot
 ```{r}
 TemperaturePlot <- train1 %>% 
   ggplot() + 
@@ -132,9 +139,11 @@ AvgTemp <- train1 %>%
   summarise(
     mean(Temperature)
   )
-AvgTemp
+
 ```
 This plot shows the temperature distribution of the crops. Grapes, Oranges, Papaya, and Pidgeon Peas are extremely variable in their temperature range, meaning that climate may be less important than soil parameters.
+
+### Humidity Plot
 ```{r}
 HumidityPlot <- train1 %>% 
   ggplot() +
@@ -148,10 +157,11 @@ AvgHum <- train1 %>%
   summarise(
     mean(Humidity)
   )
-AvgHum
+
 ```
 This plot shows the different humidity measurements for each of the crops. In this plot there is also two groups with outliers. Chick Peas and Kidney Beans are very low in humidity while the other crops are hovering around the mean and lower and upper quartiles.
 
+### pH Plot
 ```{r}
 phPlot <- train1 %>% 
   ggplot() +
@@ -165,10 +175,11 @@ AvgpH <- train1 %>%
   summarise(
     mean(pH_Value)
   )
-AvgpH
-```
-This plot shows the distribution of pH in the soil. 
 
+```
+This plot shows the distribution of pH in the soil. The value for pH is later found to be not extremely significant as a "predictor" but is still a significant parameter for some crops. Rice, Pomegranate, Pigeon Peas, Moth Beans, Mango, and Chick Peas require less specific pH values than many of the other crops.
+
+### Rainfall Plot
 ```{r}
 RainfallPlot <- train1 %>% 
   ggplot() +
@@ -176,18 +187,18 @@ RainfallPlot <- train1 %>%
   geom_boxplot(aes(x = Rainfall)) +
   labs(title = "Rainfall of each Crop") +
   theme(legend.position = "none")
-RainfallPlot
+
 
 
 ```
-This plot shows the rainfall in millimeters for each crop. Many are specific to the amount of rain they receive but some crops (Rice, Pidgeon Peas, Papaya, Kidney Beans, Coffee, and Coconut) are quite variable.
+This plot shows the rainfall in millimeters for each crop. Many are specific to the amount of rain they receive but some crops (Rice, Pigeon Peas, Papaya, Kidney Beans, Coffee, and Coconut) are quite variable.
 
 ```{r}
 
 
 ```
 
-# Model Construction and Testing
+# Model Construction and Analysis
 
 To get some initial idea of important parameters to consider, we will use a Decision Tree model to examine the parameters that may be the most useful in predictive and descriptive power. We will not need to truly predict anything with these models, but we will be able to identify these key parameters and eventually find cover crops that may work well with the crops we have mentioned in this data set. 
 
@@ -298,7 +309,7 @@ dt_fit3 %>%
   rpart.plot::rpart.plot(type = 0, tweak = 2.5, box.palette = 0, roundint = FALSE)
 
 ```
-After running these models, we can see that the climate related parameters are still the most distinguishable compared to the Soil composition parameters. 
+After running these models, we can see that the climate related parameters are still the most distinguishable compared to the Soil composition parameters. The Decision Tree made with climatic parameters had an accuracy value of 0.86 and the soil composition Decision tree accuracy was 0.75. This would bring us to assume that while soil composition is important, it may not be the driving parameters that allow for healthy crop growth.
 
 
 
@@ -363,7 +374,7 @@ Rain_Humidity <- ggplot() +
                          alpha = 0.5) +
   geom_point(data = train1,
              aes(x = Humidity, y = Rainfall, color = Crop, fill = Crop),
-             alpha = 1) +
+             alpha = 5) +
   scale_color_manual(values = c(c("#E41A1C", "#377EB8", "#4DAF4A", "#984EA3", "#FF7F00",
   "#FFFF33", "#A65628", "#F781BF", "#999999", "#1B9E77",
   "#D95F02", "#7570B3", "#E7298A", "#66A61E", "#E6AB02",
@@ -376,9 +387,14 @@ Rain_Humidity
 
 
 ```
-This plot shows the relative predictions of the crops that grow in its respective Rainfall levels and Humidity levels. There are some crops that are distinct from the others, making more obvious sections in this chart. The Rainfall and Humidity values are two good predictors of what crops can be grown in certain climate regimes.
+This plot shows the relative predictions of the crops that grow in its respective Rainfall levels and Humidity levels. There are some crops that are distinct from the others, making more obvious sections in this chart such as Chick Peas, Kidney Beans, Mango, Moth Beans, Rice, and Pigeon Peas. The Rainfall and Humidity values are two good predictors of what crops can be grown in certain climate regimes.
 
-By further examining the graph, you may notice that in high humidity there is lots of overlap between many of the crops. This may be useful information as these crops may thrive in similar conditions. 
+By further examining the graph, you may notice that in high humidity there is lots of overlap between many of the crops. This may be useful information as these crops may thrive in similar conditions. If it is possible to identify what crops have compatible climatic regimes, than it may be possible to have a crop that is less nutrient reliant as a cover crop during the differing parts of the seasons. By doing this (along with careful consideration of the specific nutrients each crop requires) a plan for correct soil treatment (NPK fertilizer application timing and amount) can be made. Doing this for farms can increase the productivity of the soil and prevent excess nutrients from leeching to water sources through erosion, which both depletes the soil of its nutrients and can pollute streams and other water bodies. 
+
+```{r}
+
+
+```
 
 
 
@@ -411,7 +427,10 @@ train1 %>%
 TemperaturePlot
 ```
 
-Here I have filtered the data set to show the crops that are in the clumped section of the K-Nearest Neighbor visualization. Interestingly, most these crops are grown on a tree or very large bush 
+Here I have filtered the data set to show the crops that are in the clumped section of the K-Nearest Neighbor visualization. Interestingly, most of these crops are grown on a tree or very large bush which makes it hard to include cover crops into these farms BMP (Best Management Practices) as the tree and bush stay planted in some cases. 
+
+
+
 
 
 
@@ -438,7 +457,7 @@ knn_model2 <- nearest_neighbor() %>%
   set_engine("kknn") %>% 
   set_mode("classification")
 
-knn_rec2 <- recipe(Crop ~ Humidity + Temperature, data = train1) %>% 
+knn_rec2 <- recipe(Crop ~ Humidity + Potassium, data = train1) %>% 
   step_normalize(all_numeric_predictors()) %>% 
   step_impute_median(all_numeric_predictors()) %>% 
   step_dummy(all_nominal_predictors()) 
@@ -464,36 +483,47 @@ knn_fit21
 
 ```{r}
 mesh_grid2 <- crossing(
-  Humidity = seq(0, 100, length.out = 200),
-  #Rainfall = seq(0, 300, length.out = 200)
-  #pH_Value = seq(0, 10, length.out = 100),
- #Potassium = seq(0, 230, length.out = 200),
-  #Phosphorus = seq(0, 150, length.out = 200)
-  #Nitrogen = seq(0, 200, length.out = 200),
-  Temperature = seq(0, 40, length.out = 200)
+  Humidity = seq(0, 100, length.out = 100),
+  #Rainfall = seq(0, 300, length.out = 100)
+  #pH_Value = seq(0, 10, length.out = 10),
+ Potassium = seq(0, 230, length.out = 100)
+ # Phosphorus = seq(0, 150, length.out = 10),
+ # Nitrogen = seq(0, 200, length.out = 10),
+ #Temperature = seq(0, 40, length.out = 100)
 )
 
 mesh_grid2 <- knn_fit2 %>%
   augment(mesh_grid2)
 
-Phosphorus_pH <- ggplot() + 
+Pot_Humidity <- ggplot() + 
   geom_point(data = mesh_grid2,
-                         aes(x = Temperature, y = Humidity, color = .pred_class),
+                         aes(x = Humidity, y = Potassium, color = .pred_class),
                          alpha = 0.5) +
   geom_point(data = train1,
-             aes(x = Temperature, y = Humidity, color = Crop, fill = Crop),
-             alpha = 0.0005) +
+             aes(x = Humidity, y = Potassium, color = Crop, fill = Crop),
+             alpha = 5) +
   scale_color_manual(values = c(c("#E41A1C", "#377EB8", "#4DAF4A", "#984EA3", "#FF7F00",
   "#FFFF33", "#A65628", "#F781BF", "#999999", "#1B9E77",
   "#D95F02", "#7570B3", "#E7298A", "#66A61E", "#E6AB02",
   "#A6761D", "#666666", "#F0027F", "#008000", "#0000FF",
   "#800080", "#808000"))) +
-  labs(x = "pH", y = "Phosphorus") + 
+  labs(x = "Humidity", y = "Potassium") + 
   expand_limits(x = 0, y = 0)
 
-Phosphorus_pH
-```
+Pot_Humidity
 
+```
+```{r}
+POT_HUM <- train1 %>% 
+  filter(Humidity < 70) %>% 
+  filter(Humidity > 55) %>% 
+  filter(Potassium < 25) %>% 
+  filter(Potassium > 15) %>% 
+  count(Crop)
+  
+POT_HUM
+```
+After filtering another section of the graph where there are many overlaps, we can see that 5 of the crops have similar levels of Humidity and Potassium. This may be a slight indicator of what crops may be compatible with one another based on the climatic and at least one soil composition parameter that are specific to the crop.
 
 
 

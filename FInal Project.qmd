@@ -1,5 +1,5 @@
 ---
-title: "Final Document"
+title: "Crop Parameters: How Can we Decide on Cover Crops?"
 format: html
 ---
 
@@ -9,7 +9,8 @@ Quarto enables you to weave together content and executable code into a finished
 
 ## Setting up the Data
 
-```{r}
+```{r, echo = FALSE}
+
 
 library(tidyverse)
 library(tidymodels)
@@ -25,19 +26,23 @@ library(ggforce)
 
 
 
-data1 <- read.csv("https://storage.googleapis.com/kagglesdsdata/datasets/4933767/8305330/Crop_Recommendation.csv?X-Goog-Algorithm=GOOG4-RSA-SHA256&X-Goog-Credential=gcp-kaggle-com%40kaggle-161607.iam.gserviceaccount.com%2F20250414%2Fauto%2Fstorage%2Fgoog4_request&X-Goog-Date=20250414T145419Z&X-Goog-Expires=259200&X-Goog-SignedHeaders=host&X-Goog-Signature=55857991c5dbc4c3057bd117c036e2ac39c17c3d85479480a42ac320e310c91a58566e9466d98d9b0966699744f08e3dcd62880c77adcbe34ddc9a6e2d89ff05eb7d489d625fdce36ad9213a726f2b0d9a45edcd14deb5f7e5b0f418c844cc014493ba69a994f4e3076329c1c03ae59c3e564e31ac3d614920a4ed28412f5a9640ee14837a086edbad82deed368bed2110a2cfc5adb72fe51838150477f6075f9987b29bb6b993891fe8ea7565e665966a0bee2ab0dcb48c326eae2b69757457b6d412b136d33343d505c2af989014ec00e36c838d076b7399aa2c0e71d665a3f80b46a4e5c5fa37c33a39460243ff1fff0825e3bf1bcf6882471ab63bc57fc6")
+data1 <- read.csv("Crop_data.csv")
 
 ```
 
 
-```{r}
+```{r, echo = FALSE}
 
 
 ```
 
-```{r}
+```{r, echo = FALSE}
+
 
 data1$Crop <- as.factor(data1$Crop)
+data1$Phosphorus <- as.numeric(data1$Phosphorus)
+data1$Nitrogen <- as.numeric(data1$Nitrogen)
+data1$Potassium <- as.numeric(data1$Potassium)
 
 set.seed(298)
 data_splits1 <- initial_split(data1)
@@ -55,7 +60,11 @@ train_folds1 <- vfold_cv(train1, v = 10)
 
 ##Statement of Purpose
 
-These plots show the differences of the soil and climate parameters measured for each crop. Some of the parameters are very descriptive for specific crops while others are not so clear. By making a model and describing the meaning behind how crops can be classified, we will be able to make decisions on what cover crop to use on land that will not further degrade the soil for the main crop to thrive when in season. There are a lot of factors that play a part in the crop yield but these are some of the most important and easily measured parameters.
+These plots show the differences of the soil and climate parameters measured for different crops. Some of the parameters are very descriptive for specific crops while others are not so clear. By making a model and describing the meaning behind how crops can be classified, we will be able to make decisions on what cover crop to use on land that will not further degrade the soil for the main crop to thrive when in season. There are many factors that play a part in soil stability and crop yield but these are some of the most important and easily measured parameters.
+
+Cover crops are becoming more important as our food supply is becoming more and more challenged. By reducing erosion and preventing heavy biodiversity loss, farmers can keep soils healthy and increase soil quality. In order to achieve this, identifying cover crop that will grow effectively in a region is crucial to prevent the need for heavy fertilizing and the use of other chemicals.
+
+The combination of the correct climate and the most suitable soil composition will be examined for many of the more distinct crops in this data set. 
 
 ```{r}
 
@@ -178,7 +187,12 @@ This plot shows the rainfall in millimeters for each crop. Many are specific to 
 
 ```
 
-#Model Construction and Testing
+# Model Construction and Testing
+
+To get some initial idea of important parameters to consider, we will use a Decision Tree model to examine the parameters that may be the most useful in predictive and descriptive power. We will not need to truly predict anything with these models, but we will be able to identify these key parameters and eventually find cover crops that may work well with the crops we have mentioned in this data set. 
+
+
+## Initial Decision Tree Model
 ```{r}
 
 dt_spec1 <- decision_tree() %>% 
@@ -205,7 +219,7 @@ dt_fit1 %>%
 
 dt_fit1 %>%
   extract_fit_engine() %>%
-  rpart.plot::rpart.plot(type = 0, tweak = 2.5)  
+  rpart.plot::rpart.plot(type = 0, tweak = 2.5, box.palette = 0, roundint = FALSE)  
   
 
 #extracted_tree <- dt_fit1 %>% 
@@ -216,6 +230,188 @@ dt_fit1 %>%
 
 
 ```
+This initial Decision Tree model was made to examine what predictors were distinct in each of the crops. By comparing this to geographical location and growing season, we will be able to visualize the important parameters for each crop. Without tuning the model, the "accuracy" metric was taken and shown to be very significant (mean confidence 0.968). The two parameters that were used the most in this Decision tree model were the Rainfall measurement and the Humidity measurement. Interestingly, although pH and temperature are important for plant growth, they were not used at all in this model. 
+
+ 
+Now that we have observed that our Decision Tree models have not used Temperature and soil pH to distinguish between the crops, we can split our parameters into two groups of classification. The first is the climatic regime, which includes the Rainfall, Humidity, and Temperature and the second will be the soil composition, including Nitrogen, Potassium, Phosphorus, and Soil pH. 
+
+## Climate Related Decision Tree Accuracy
+```{r}
+
+dt_spec2 <- decision_tree() %>% 
+  set_engine("rpart") %>% 
+  set_mode("classification")
+
+dt_rec2 <- recipe(Crop ~ Rainfall + Humidity + Temperature, data = train1) %>% 
+  step_normalize(all_numeric_predictors()) %>% 
+  step_impute_mean(all_numeric_predictors()) %>% 
+  step_dummy(all_nominal_predictors())
+
+dt_wf2 <- workflow() %>% 
+  add_model(dt_spec2) %>% 
+  add_recipe(dt_rec2)
+
+
+dt_fit2 <- dt_wf2 %>% 
+  fit(train1)
+
+dt_fit2 %>% 
+  augment(train1) %>% 
+  accuracy(Crop, .pred_class)
+
+
+dt_fit2 %>%
+  extract_fit_engine() %>%
+  rpart.plot::rpart.plot(type = 0, tweak = 2.5, box.palette = 0, roundint = FALSE)
+
+
+```
+
+
+
+## Soil Composition Decision Tree Accuracy
+```{r}
+dt_spec3 <- decision_tree() %>% 
+  set_engine("rpart") %>% 
+  set_mode("classification")
+
+dt_rec3 <- recipe(Crop ~ Potassium + Phosphorus + Nitrogen + pH_Value, data = train1) %>% 
+  step_normalize(all_numeric_predictors()) %>% 
+  step_impute_mean(all_numeric_predictors()) %>% 
+  step_dummy(all_nominal_predictors())
+
+dt_wf3 <- workflow() %>% 
+  add_model(dt_spec3) %>% 
+  add_recipe(dt_rec3)
+
+
+dt_fit3 <- dt_wf3 %>% 
+  fit(train1)
+
+dt_fit3 %>% 
+  augment(train1) %>% 
+  accuracy(Crop, .pred_class)
+
+
+dt_fit3 %>%
+  extract_fit_engine() %>%
+  rpart.plot::rpart.plot(type = 0, tweak = 2.5, box.palette = 0, roundint = FALSE)
+
+```
+After running these models, we can see that the climate related parameters are still the most distinguishable compared to the Soil composition parameters. 
+
+
+
+Next we will examine the number of times each parameter is used to categorize each crop and create a "K Nearest Neighbor" model to visualize what combination of values for these two parameters is ideal for each crop.
+
+## Humidity and Rainfall KNN Model and Visualization
+```{r}
+
+knn_model <- nearest_neighbor() %>% 
+  set_engine("kknn") %>% 
+  set_mode("classification")
+
+knn_rec <- recipe(Crop ~ Humidity + Rainfall, data = train1) %>% 
+  step_normalize(all_numeric_predictors()) %>% 
+  step_impute_median(all_numeric_predictors()) %>% 
+  step_dummy(all_nominal_predictors())
+
+
+knn_wf <- workflow() %>% 
+add_model(knn_model) %>% 
+  add_recipe(knn_rec)
+
+knn_fit <- knn_wf %>% 
+  fit(train1)
+
+  
+knn_fit1.1 <- knn_fit %>% 
+  augment(train1) %>% 
+accuracy(Crop, .pred_class)
+
+knn_fit1.1
+
+
+```
+This K-Nearest Neighbor model is also quite accurate (mean confidence 0.90). It is not tuned and is only using Rainfall and Humidity as predictor variables unlike the Decision Tree which was using all of the parameters.
+```{r}
+
+
+
+```
+
+
+
+
+```{r}
+mesh_grid <- crossing(
+  Humidity = seq(0, 100, length.out = 100),
+  Rainfall = seq(0, 300, length.out = 100)
+  #pH_Value = seq(0, 10, length.out = 10),
+ # Potassium = seq(0, 230, length.out = 10),
+ # Phosphorus = seq(0, 150, length.out = 10),
+ # Nitrogen = seq(0, 200, length.out = 10),
+ #Temperature = seq(0, 40, length.out = 100)
+)
+
+mesh_grid <- knn_fit %>%
+  augment(mesh_grid)
+
+Rain_Humidity <- ggplot() + 
+  geom_point(data = mesh_grid,
+                         aes(x = Humidity, y = Rainfall, color = .pred_class),
+                         alpha = 0.5) +
+  geom_point(data = train1,
+             aes(x = Humidity, y = Rainfall, color = Crop, fill = Crop),
+             alpha = 1) +
+  scale_color_manual(values = c(c("#E41A1C", "#377EB8", "#4DAF4A", "#984EA3", "#FF7F00",
+  "#FFFF33", "#A65628", "#F781BF", "#999999", "#1B9E77",
+  "#D95F02", "#7570B3", "#E7298A", "#66A61E", "#E6AB02",
+  "#A6761D", "#666666", "#F0027F", "#008000", "#0000FF",
+  "#800080", "#808000"))) +
+  labs(x = "Humidity", y = "Rainfall") + 
+  expand_limits(x = 0, y = 0)
+
+Rain_Humidity
+
+
+```
+This plot shows the relative predictions of the crops that grow in its respective Rainfall levels and Humidity levels. There are some crops that are distinct from the others, making more obvious sections in this chart. The Rainfall and Humidity values are two good predictors of what crops can be grown in certain climate regimes.
+
+By further examining the graph, you may notice that in high humidity there is lots of overlap between many of the crops. This may be useful information as these crops may thrive in similar conditions. 
+
+
+
+```{r}
+
+like_crops <- train1 %>% 
+  filter(Humidity > 75)
+like_crops %>% 
+  count(Crop)
+
+like_crops
+
+
+
+like_crops1 <- like_crops %>% 
+  filter(Rainfall > 40) %>% 
+  filter(Rainfall < 130) %>% 
+   group_by(Crop) %>% 
+  summarise(
+    AvgTemp = mean(Temperature) 
+         )
+like_crops1
+
+
+
+
+train1 %>% 
+  count(Crop)
+
+TemperaturePlot
+```
+
+Here I have filtered the data set to show the crops that are in the clumped section of the K-Nearest Neighbor visualization. Interestingly, most these crops are grown on a tree or very large bush 
 
 
 
@@ -224,6 +420,86 @@ dt_fit1 %>%
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+
+knn_model2 <- nearest_neighbor() %>% 
+  set_engine("kknn") %>% 
+  set_mode("classification")
+
+knn_rec2 <- recipe(Crop ~ Humidity + Temperature, data = train1) %>% 
+  step_normalize(all_numeric_predictors()) %>% 
+  step_impute_median(all_numeric_predictors()) %>% 
+  step_dummy(all_nominal_predictors()) 
+
+
+knn_wf2 <- workflow() %>% 
+add_model(knn_model2) %>% 
+  add_recipe(knn_rec2)
+
+knn_fit2 <- knn_wf2 %>% 
+  fit(train1)
+
+  
+knn_fit21 <- knn_fit2 %>% 
+  augment(train1) %>% 
+accuracy(Crop, .pred_class)
+
+knn_fit21
+
+```
+
+
+
+```{r}
+mesh_grid2 <- crossing(
+  Humidity = seq(0, 100, length.out = 200),
+  #Rainfall = seq(0, 300, length.out = 200)
+  #pH_Value = seq(0, 10, length.out = 100),
+ #Potassium = seq(0, 230, length.out = 200),
+  #Phosphorus = seq(0, 150, length.out = 200)
+  #Nitrogen = seq(0, 200, length.out = 200),
+  Temperature = seq(0, 40, length.out = 200)
+)
+
+mesh_grid2 <- knn_fit2 %>%
+  augment(mesh_grid2)
+
+Phosphorus_pH <- ggplot() + 
+  geom_point(data = mesh_grid2,
+                         aes(x = Temperature, y = Humidity, color = .pred_class),
+                         alpha = 0.5) +
+  geom_point(data = train1,
+             aes(x = Temperature, y = Humidity, color = Crop, fill = Crop),
+             alpha = 0.0005) +
+  scale_color_manual(values = c(c("#E41A1C", "#377EB8", "#4DAF4A", "#984EA3", "#FF7F00",
+  "#FFFF33", "#A65628", "#F781BF", "#999999", "#1B9E77",
+  "#D95F02", "#7570B3", "#E7298A", "#66A61E", "#E6AB02",
+  "#A6761D", "#666666", "#F0027F", "#008000", "#0000FF",
+  "#800080", "#808000"))) +
+  labs(x = "pH", y = "Phosphorus") + 
+  expand_limits(x = 0, y = 0)
+
+Phosphorus_pH
+```
+
+
+
+
+c("Apple", "Maize", "Banana", "Mango", "Blackgram", "MothBeans", "ChickPea", "MungBean", "Coconut", "Muskmelon", "Coffee", "Orange", "Cotton", "Papaya", "Grapes", "PidgeonPeas", "Jute", "Pomegranate", "KidneyBeans", "Rice", "Lentil", "Watermelon")
+
+ 
 
 
 

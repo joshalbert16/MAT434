@@ -1,15 +1,14 @@
 ---
 title: "Crop Parameters: How Can we Decide on Cover Crops?"
 format: html
+
 ---
 
-## Quarto
 
-Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
 
 ## Setting up the Data
 
-```{r, echo = FALSE}
+```{r setup, include=FALSE}
 
 
 library(tidyverse)
@@ -29,6 +28,7 @@ library(ggforce)
 data1 <- read.csv("Crop_data.csv")
 
 ```
+
 
 
 ```{r, echo = FALSE}
@@ -57,18 +57,18 @@ train_folds1 <- vfold_cv(train1, v = 10)
 
 ```
 
-
 # Statement of Purpose
 
 These plots show the differences of the soil and climate parameters measured for different crops. Some of the parameters are very descriptive for specific crops while others are not so clear. By making a model and describing the meaning behind how crops can be classified, we will be able to make decisions on what cover crop to use on land that will not further degrade the soil for the main crop to thrive when in season. There are many factors that play a part in soil stability and crop yield but these are some of the most important and easily measured parameters.
 
 Cover crops are becoming more important as our food supply is becoming more and more challenged. By reducing erosion and preventing heavy biodiversity loss, farmers can keep soils healthy and increase soil quality. In order to achieve this, identifying cover crop that will grow effectively in a region is crucial to prevent the need for heavy fertilizing and the use of other chemicals.
 
-The combination of the correct climate and the most suitable soil composition will be examined for many of the more distinct crops in this data set. 
+The combination of the correct climate and the most suitable soil composition can be examined for many of the more distinct crops in this data set.
 
 # Exploratory Data Analysis
 
 ### Nitrogen Plot
+
 ```{r}
 
 NitrogenPlot <- train1 %>% 
@@ -77,18 +77,17 @@ NitrogenPlot <- train1 %>%
   geom_boxplot(aes(x = Nitrogen)) +
   labs(title = "Soil Nitrogen in each Crop") +
   theme(legend.position = "none")
-
-NitrogenPlot
-
 AvgNit <- train1 %>% 
   summarise(
   mean(Nitrogen)
 )
+NitrogenPlot
 ```
+
 This plot shows that there are some crops that are very similar in having a low nitrogen ratio need (Pomegranates, Pigeon Peas, Oranges, Mung Beans, Moth Beans, Mangos, Lentils, Kidney Beans, Grapes, Coconuts, and Apples) while the others (Watermelon, Rice, Papaya, Muskmelon, Maize, Jute, Cotton, Coffee, Chick Pea, Blackgram, and Banana) require a higher nitrogen ratio.
 
-
 ### Phosphorus Plot
+
 ```{r}
 PhosphorusPlot <- train1 %>% 
   ggplot() +
@@ -96,18 +95,17 @@ PhosphorusPlot <- train1 %>%
   geom_boxplot(aes(x = Phosphorus)) +
   labs(title = "Soil Phosphorus in each Crop") +
   theme(legend.position = "none")
-PhosphorusPlot
-
 AvgPho <- train1 %>% 
   summarise(
     mean(Phosphorus)
   )
+PhosphorusPlot
+```
 
-```  
 In this plot, Grapes and Apples are outliers, having Phosphorus values that are much higher than the other crops. The remaining 20 crops are still spread between 3 general clusters, close to the lower quartile, close to the mean, and close to the upper quartile.
 
-
 ### Potassium Plot
+
 ```{r}
 PotassiumPlot <- train1 %>% 
   ggplot() +
@@ -115,17 +113,17 @@ PotassiumPlot <- train1 %>%
   geom_boxplot(aes(x = Potassium)) +
   labs(title = "Potassium in each Crop") +
   theme(legend.position = "none")
-PotassiumPlot
-
 AvgPot <- train1 %>% 
   summarise(
     mean(Potassium)
   )
+PotassiumPlot
 ```
-In this plot, Potassium shows to be similar to Phosphorus in the sense that grapes and apples are large outliers and there seems to be the lower, mean, and upper quartile groups. It will be interesting to compare the other crops to one another to see if the same groups form with both parameters. 
 
+In this plot, Potassium shows to be similar to Phosphorus in the sense that grapes and apples are large outliers and there seems to be the lower, mean, and upper quartile groups. It will be interesting to compare the other crops to one another to see if the same groups form with both parameters.
 
 ### Temperature Plot
+
 ```{r}
 TemperaturePlot <- train1 %>% 
   ggplot() + 
@@ -133,17 +131,17 @@ TemperaturePlot <- train1 %>%
   geom_boxplot(aes(x = Temperature)) +
   labs(title = "Temperature of each Crop") +
   theme(legend.position = "none")
-TemperaturePlot
-
 AvgTemp <- train1 %>% 
   summarise(
     mean(Temperature)
   )
-
+TemperaturePlot
 ```
+
 This plot shows the temperature distribution of the crops. Grapes, Oranges, Papaya, and Pidgeon Peas are extremely variable in their temperature range, meaning that climate may be less important than soil parameters.
 
 ### Humidity Plot
+
 ```{r}
 HumidityPlot <- train1 %>% 
   ggplot() +
@@ -151,17 +149,17 @@ HumidityPlot <- train1 %>%
   geom_boxplot(aes(x = Humidity)) +
   labs(title = "Humidity of each Crop") +
   theme(legend.position = "none")
-HumidityPlot
-
 AvgHum <- train1 %>% 
   summarise(
     mean(Humidity)
   )
-
+HumidityPlot
 ```
+
 This plot shows the different humidity measurements for each of the crops. In this plot there is also two groups with outliers. Chick Peas and Kidney Beans are very low in humidity while the other crops are hovering around the mean and lower and upper quartiles.
 
 ### pH Plot
+
 ```{r}
 phPlot <- train1 %>% 
   ggplot() +
@@ -169,17 +167,17 @@ phPlot <- train1 %>%
   geom_boxplot(aes(x = pH_Value)) +
   labs(title = "Soil pH of each Crop") +
   theme(legend.position = "none")
-phPlot
-
 AvgpH <- train1 %>% 
   summarise(
     mean(pH_Value)
   )
-
+phPlot
 ```
+
 This plot shows the distribution of pH in the soil. The value for pH is later found to be not extremely significant as a "predictor" but is still a significant parameter for some crops. Rice, Pomegranate, Pigeon Peas, Moth Beans, Mango, and Chick Peas require less specific pH values than many of the other crops.
 
 ### Rainfall Plot
+
 ```{r}
 RainfallPlot <- train1 %>% 
   ggplot() +
@@ -188,23 +186,20 @@ RainfallPlot <- train1 %>%
   labs(title = "Rainfall of each Crop") +
   theme(legend.position = "none")
 
-
+RainfallPlot
 
 ```
+
 This plot shows the rainfall in millimeters for each crop. Many are specific to the amount of rain they receive but some crops (Rice, Pigeon Peas, Papaya, Kidney Beans, Coffee, and Coconut) are quite variable.
 
-```{r}
-
-
-```
 
 # Model Construction and Analysis
 
-To get some initial idea of important parameters to consider, we will use a Decision Tree model to examine the parameters that may be the most useful in predictive and descriptive power. We will not need to truly predict anything with these models, but we will be able to identify these key parameters and eventually find cover crops that may work well with the crops we have mentioned in this data set. 
-
+To get some initial idea of important parameters to consider, we will use a Decision Tree model to examine the parameters that may be the most useful in predictive and descriptive power. We will not need to truly predict anything with these models, but we will be able to identify these key parameters and eventually find cover crops that may work well with the crops we have mentioned in this data set.
 
 ## Initial Decision Tree Model
-```{r}
+
+```{r, echo = FALSE}
 
 dt_spec1 <- decision_tree() %>% 
   set_engine("rpart") %>% 
@@ -222,31 +217,29 @@ dt_wf1 <- workflow() %>%
 
 dt_fit1 <- dt_wf1 %>% 
   fit(train1)
+```
 
+```{r, echo = FALSE}
 dt_fit1 %>% 
   augment(train1) %>% 
   accuracy(Crop, .pred_class)
 
+```
 
+```{r}
 dt_fit1 %>%
   extract_fit_engine() %>%
   rpart.plot::rpart.plot(type = 0, tweak = 2.5, box.palette = 0, roundint = FALSE)  
   
 
-#extracted_tree <- dt_fit1 %>% 
- # extract_fit_engine()
-
-#plot(extracted_tree)
-#text(extracted_tree)
-
-
 ```
-This initial Decision Tree model was made to examine what predictors were distinct in each of the crops. By comparing this to geographical location and growing season, we will be able to visualize the important parameters for each crop. Without tuning the model, the "accuracy" metric was taken and shown to be very significant (mean confidence 0.968). The two parameters that were used the most in this Decision tree model were the Rainfall measurement and the Humidity measurement. Interestingly, although pH and temperature are important for plant growth, they were not used at all in this model. 
 
- 
-Now that we have observed that our Decision Tree models have not used Temperature and soil pH to distinguish between the crops, we can split our parameters into two groups of classification. The first is the climatic regime, which includes the Rainfall, Humidity, and Temperature and the second will be the soil composition, including Nitrogen, Potassium, Phosphorus, and Soil pH. 
+This initial Decision Tree model was made to examine what predictors were distinct in each of the crops. By comparing this to geographical location and growing season, we will be able to visualize the important parameters for each crop. Without tuning the model, the "accuracy" metric was taken and shown to be very significant (mean confidence 0.968). The two parameters that were used the most in this Decision tree model were the Rainfall measurement and the Humidity measurement. Interestingly, although pH and temperature are important for plant growth, they were not used at all in this model.
+
+Now that we have observed that our Decision Tree models have not used Temperature and soil pH to distinguish between the crops, we can split our parameters into two groups of classification. The first is the climatic regime, which includes the Rainfall, Humidity, and Temperature and the second will be the soil composition, including Nitrogen, Potassium, Phosphorus, and Soil pH.
 
 ## Climate Related Decision Tree Accuracy
+
 ```{r}
 
 dt_spec2 <- decision_tree() %>% 
@@ -265,12 +258,15 @@ dt_wf2 <- workflow() %>%
 
 dt_fit2 <- dt_wf2 %>% 
   fit(train1)
+```
 
+```{r, echo = FALSE}
 dt_fit2 %>% 
   augment(train1) %>% 
   accuracy(Crop, .pred_class)
+```
 
-
+```{r}
 dt_fit2 %>%
   extract_fit_engine() %>%
   rpart.plot::rpart.plot(type = 0, tweak = 2.5, box.palette = 0, roundint = FALSE)
@@ -278,9 +274,8 @@ dt_fit2 %>%
 
 ```
 
-
-
 ## Soil Composition Decision Tree Accuracy
+
 ```{r}
 dt_spec3 <- decision_tree() %>% 
   set_engine("rpart") %>% 
@@ -294,7 +289,9 @@ dt_rec3 <- recipe(Crop ~ Potassium + Phosphorus + Nitrogen + pH_Value, data = tr
 dt_wf3 <- workflow() %>% 
   add_model(dt_spec3) %>% 
   add_recipe(dt_rec3)
+```
 
+```{r, echo = FALSE}
 
 dt_fit3 <- dt_wf3 %>% 
   fit(train1)
@@ -302,20 +299,21 @@ dt_fit3 <- dt_wf3 %>%
 dt_fit3 %>% 
   augment(train1) %>% 
   accuracy(Crop, .pred_class)
+```
 
-
+```{r}
 dt_fit3 %>%
   extract_fit_engine() %>%
   rpart.plot::rpart.plot(type = 0, tweak = 2.5, box.palette = 0, roundint = FALSE)
 
 ```
+
 After running these models, we can see that the climate related parameters are still the most distinguishable compared to the Soil composition parameters. The Decision Tree made with climatic parameters had an accuracy value of 0.86 and the soil composition Decision tree accuracy was 0.75. This would bring us to assume that while soil composition is important, it may not be the driving parameters that allow for healthy crop growth.
-
-
 
 Next we will examine the number of times each parameter is used to categorize each crop and create a "K Nearest Neighbor" model to visualize what combination of values for these two parameters is ideal for each crop.
 
 ## Humidity and Rainfall KNN Model and Visualization
+
 ```{r}
 
 knn_model <- nearest_neighbor() %>% 
@@ -344,15 +342,14 @@ knn_fit1.1
 
 
 ```
+
 This K-Nearest Neighbor model is also quite accurate (mean confidence 0.90). It is not tuned and is only using Rainfall and Humidity as predictor variables unlike the Decision Tree which was using all of the parameters.
+
 ```{r}
 
 
 
 ```
-
-
-
 
 ```{r}
 mesh_grid <- crossing(
@@ -382,33 +379,32 @@ Rain_Humidity <- ggplot() +
   "#800080", "#808000"))) +
   labs(x = "Humidity", y = "Rainfall") + 
   expand_limits(x = 0, y = 0)
+```
 
+```{r}
 Rain_Humidity
 
 
 ```
+
 This plot shows the relative predictions of the crops that grow in its respective Rainfall levels and Humidity levels. There are some crops that are distinct from the others, making more obvious sections in this chart such as Chick Peas, Kidney Beans, Mango, Moth Beans, Rice, and Pigeon Peas. The Rainfall and Humidity values are two good predictors of what crops can be grown in certain climate regimes.
 
-By further examining the graph, you may notice that in high humidity there is lots of overlap between many of the crops. This may be useful information as these crops may thrive in similar conditions. If it is possible to identify what crops have compatible climatic regimes, than it may be possible to have a crop that is less nutrient reliant as a cover crop during the differing parts of the seasons. By doing this (along with careful consideration of the specific nutrients each crop requires) a plan for correct soil treatment (NPK fertilizer application timing and amount) can be made. Doing this for farms can increase the productivity of the soil and prevent excess nutrients from leeching to water sources through erosion, which both depletes the soil of its nutrients and can pollute streams and other water bodies. 
+By further examining the graph, you may notice that in high humidity there is lots of overlap between many of the crops. This may be useful information as these crops may thrive in similar conditions. If it is possible to identify what crops have compatible climatic regimes, than it may be possible to have a crop that is less nutrient reliant as a cover crop during the differing parts of the seasons. By doing this (along with careful consideration of the specific nutrients each crop requires) a plan for correct soil treatment (NPK fertilizer application timing and amount) can be made. Doing this for farms can increase the productivity of the soil and prevent excess nutrients from leeching to water sources through erosion, which both depletes the soil of its nutrients and can pollute streams and other water bodies.
 
 ```{r}
 
 
 ```
-
-
 
 ```{r}
 
 like_crops <- train1 %>% 
   filter(Humidity > 75)
 like_crops %>% 
-  count(Crop)
-
-like_crops
-
-
-
+  count(Crop) 
+```
+This code filters the data into crops that have a Humidity Value over 75.
+```{r}
 like_crops1 <- like_crops %>% 
   filter(Rainfall > 40) %>% 
   filter(Rainfall < 130) %>% 
@@ -416,40 +412,15 @@ like_crops1 <- like_crops %>%
   summarise(
     AvgTemp = mean(Temperature) 
          )
-like_crops1
-
-
-
-
+```
+This code filters the data into crops that have a Humidity value over 75 and Rainfall values in between 40 and 130.
+```{r}
 train1 %>% 
   count(Crop)
 
-TemperaturePlot
 ```
 
-Here I have filtered the data set to show the crops that are in the clumped section of the K-Nearest Neighbor visualization. Interestingly, most of these crops are grown on a tree or very large bush which makes it hard to include cover crops into these farms BMP (Best Management Practices) as the tree and bush stay planted in some cases. 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+Here I have filtered the data set to show the crops that are in the clumped section of the K-Nearest Neighbor visualization. Interestingly, most of these crops are grown on a tree or very large bush which makes it hard to include cover crops into these farms BMP (Best Management Practices) as the tree and bush stay planted in some cases.
 
 ```{r}
 
@@ -479,8 +450,6 @@ knn_fit21
 
 ```
 
-
-
 ```{r}
 mesh_grid2 <- crossing(
   Humidity = seq(0, 100, length.out = 100),
@@ -509,30 +478,51 @@ Pot_Humidity <- ggplot() +
   "#800080", "#808000"))) +
   labs(x = "Humidity", y = "Potassium") + 
   expand_limits(x = 0, y = 0)
+```
 
+```{r}
 Pot_Humidity
 
 ```
+
 ```{r}
 POT_HUM <- train1 %>% 
   filter(Humidity < 70) %>% 
   filter(Humidity > 55) %>% 
   filter(Potassium < 25) %>% 
   filter(Potassium > 15) %>% 
+  filter(Rainfall < 130) %>% 
+  filter(Rainfall > 40)
+POT_HUM %>% 
   count(Crop)
   
-POT_HUM
 ```
-After filtering another section of the graph where there are many overlaps, we can see that 5 of the crops have similar levels of Humidity and Potassium. This may be a slight indicator of what crops may be compatible with one another based on the climatic and at least one soil composition parameter that are specific to the crop.
+Here I have filtered crops that have values of Humidity in between 55 and 70, Potassium values in between 15 and 25, and Rainfall values in between40 and 130.
 
 
+```{r}
+POT_HUM1 <- train1 %>% 
+  filter(Humidity < 100) %>% 
+  filter(Humidity > 75) %>% 
+  filter(Potassium < 60) %>% 
+  filter(Potassium > 30) %>% 
+  filter(Rainfall < 130) %>% 
+  filter(Rainfall > 20)
+POT_HUM1 %>% 
+  count(Crop)
+```
+Here I have filtered crops that have values of Humidity in between 75 and 100, Potassium values in between 30 and 60, and Rainfall values in between 20 and 130. 
 
-c("Apple", "Maize", "Banana", "Mango", "Blackgram", "MothBeans", "ChickPea", "MungBean", "Coconut", "Muskmelon", "Coffee", "Orange", "Cotton", "Papaya", "Grapes", "PidgeonPeas", "Jute", "Pomegranate", "KidneyBeans", "Rice", "Lentil", "Watermelon")
 
- 
+## General Conclusions
 
-
-
+After filtering another section of the graph where there are many overlaps, we can see that 5 of the crops have similar levels of Humidity, Rainfall levels and Potassium. This may be a slight indicator of what crops may be compatible with one another based on the climatic and at least one soil composition parameter that are specific to the crop. As mentioned previously though, crops that are grown on trees are sometimes not applicable because the trees are generally not disturbed between growing seasons. Bananas, Oranges, and Coconuts are a few that are an exception as they need these parameters for a long period of the year so the tree can grow fast, and the trees may be cut down in between harvests. 
 
 
-The `echo: false` option disables the printing of code (only output is displayed).
+There are many more crops than in this data set but one good example of cover cropping is the cultivation of maize. Maize/Corn is an extremely popular crop as it is used for many human foods and animal feed, so effective cultivation is important. In the United States, corn is very prevalent in the mid-west as there is lots of fertile soil. By looking at crops with similar parameters to Maize, Lentils have a very similar need for Humidity, Rainfall, and Potassium. The Temperature, Nitrogen and Phosphorus values are not identical, but they are compatible enough for Lentils to be effective cover crops. 
+
+Generally, when considering cover crops, crops that are less water and nutrient reliant than the main crop are desired. Regarding the relationship of Maize and Lentils, Lentils require less Nitrogen than Maize, which means the lentils will have two benefits. One: When planted, roots will stabilize the soil aggregates, reducing erosion of sediment and chemicals. Two: Because the Lentils require less Nitrogen, the growing and cultivation of the plant will allow for soil nitrogen fixation. This is beneficial because the farmers will be able to use less fertilizer but get strong crop yields. 
+
+Further examination of many parameters are important for accurate analysis of some of these crops. Temperature may be deceiving because the growing season temperature in the Northern Hemisphere is similar temperature to the Southern Hemisphere but the length of the season is different. The same is for Humidity, the length of time that it is humid matters for many of the crops. For Maize and Lentils, examining the many other parameters is a good start to analyze the best cover crop options. This data set also does not include logistics of how the crops grow, as I mentioned previously, if the crop is a tree, cover crops may look different with a crop like Maize or Peas. 
+
+

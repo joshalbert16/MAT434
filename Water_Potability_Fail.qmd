@@ -303,4 +303,4 @@ dt_cv_tune_fit %>%
 
 
 Concluding this report, I have found that this dataset is fabricated and does not make physical sense. It is evident that these are not actual values related to water potability based on the observations that no classifiers in the dataset have statistical significance to each other.
-The `echo: false` option disables the printing of code (only output is displayed).
+
